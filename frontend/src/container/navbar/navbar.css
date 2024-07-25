@@ -1,0 +1,19 @@
+
+p{
+    font-size: var(--text-font-size);
+    font-family: var(--font-family);
+}
+
+.navbar-container{
+    display: flex;
+    flex-direction: row;
+    
+    justify-content: flex-start;
+    align-items: center;
+
+    padding: 0 2rem;
+}
+
+.navbar-account{
+    margin-left: auto;
+}
