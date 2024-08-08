@@ -8,15 +8,9 @@ def main():
 
     clashApi = ClashRoyaleApi()
 
-    clashApi.setupLocationList()
-    
-    #with open('locationList.json', 'w') as f:
-     #   json.dump(clashApi.locationMap, f, indent=4)
+    clashApi.createLocationList()
 
-    clashApi.setupTopPlayers()
-
-    #with open('topPlayers.json', 'w') as f:
-        #json.dump(clashApi.sortedTopPlayerMap, f, indent=4)
+    clashApi.createTopPlayersList()
 
 if __name__ == '__main__':
     main()

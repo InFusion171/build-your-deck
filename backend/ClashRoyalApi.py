@@ -10,7 +10,7 @@ class ClashRoyaleApi:
         self.rankingListPathOfLegendsForLocationEndpoint = '/locations/LOCATION_ID/pathoflegend/players'
         self.locationsListEndpoint = '/locations'
 
-    def setupLocationList(self):
+    def createLocationList(self) -> dict:
         locationListResponse = ApiRequest.request(self.clashRoyalApiUrl + self.locationsListEndpoint, self.headerForApi)
 
         self.locationMap = dict()
@@ -21,7 +21,9 @@ class ClashRoyaleApi:
 
             self.locationMap[item['name']] = item['id']
 
-    def setupTopPlayers(self):
+        return self.locationMap
+
+    def createTopPlayersList(self) -> SortedDict:
         self.sortedTopPlayerMap = SortedDict()
 
         for _, locationId in self.locationMap.items():
@@ -34,3 +36,5 @@ class ClashRoyaleApi:
 
             for player in topPlayersResponse['items']:
                 self.sortedTopPlayerMap[player['eloRating']] = player['tag']
+
+        return self.sortedTopPlayerMap
