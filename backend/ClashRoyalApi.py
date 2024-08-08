@@ -2,26 +2,49 @@ import os
 from sortedcontainers import SortedDict
 
 from ApiRequest import ApiRequest
+from LocationDatabase import LocationDatabase
 
 class ClashRoyaleApi:
-    def __init__(self) -> None:
-        self.clashRoyalApiUrl = 'https://api.clashroyale.com/v1'
-        self.headerForApi =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
-        self.rankingListPathOfLegendsForLocationEndpoint = '/locations/LOCATION_ID/pathoflegend/players'
-        self.locationsListEndpoint = '/locations'
+    def __init__(self, location_db_path = '') -> None:
+        self.clash_royal_api_url = 'https://api.clashroyale.com/v1'
+        self.header_for_api =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
+        self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
+        self.locations_list_endpoint = '/locations'
 
-    def create_location_list(self) -> dict:
+        self.location_table_name = 'countries'
+        self.location_db_path = location_db_path
+
+        self.location_list = dict()
+
+    def get_location_list(self):
+        if(len(self.location_list) != 0):
+            return self.location_list
+        
+        self.location_db = LocationDatabase(self.location_db_path, self.location_table_name)
+
+        if(self.location_db.check_database_exists()):
+            self.location_list = self.location_db.get_locations()
+            return self.location_list
+        
+        self.location_list = self.get_location_list_from_api()
+
+        self.location_db.set_locations(self.location_list)
+
+
+    def get_location_list_from_db(self) -> dict:
+
+        self.location_db.get_locations()
+
+    def get_location_list_from_api(self) -> dict:
         locationListResponse = ApiRequest.request(self.clashRoyalApiUrl + self.locationsListEndpoint, self.headerForApi)
-
-        self.locationMap = dict()
 
         for item in locationListResponse['items']:
             if(item['isCountry'] == False):
                 continue
 
-            self.locationMap[item['name']] = item['id']
+            self.location_list[item['name']] = item['id']
 
-        return self.locationMap
+        return self.location_list
 
     def create_top_players_list(self) -> SortedDict:
         self.sortedTopPlayerMap = SortedDict()

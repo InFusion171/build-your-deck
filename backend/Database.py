@@ -8,16 +8,20 @@ class Database:
         self.table_name = table_name
         self.database_path = database_path
 
-        self.check_database_exists()
+        if not self.check_database_exists():
+            print(f'Database: {self.database_path} dont exists')
+            print('Created new Database')
 
-        self.db_conn = sqlite3.connect(database_path)
+    def open_db_connection(self):
+        self.db_conn = sqlite3.connect(self.database_path)
         self.cursor = self.db_conn.cursor()
 
     def check_database_exists(self) -> bool:
         if(os.path.isfile(self.database_path)):
+            self.open_db_connection()
             return True
-        
-        print(f'Database: {self.database_path} dont exists')
+
+        self.open_db_connection()
 
         return False
 
@@ -28,5 +32,6 @@ class Database:
 
     def __del__(self):
         self.db_conn.close()
+        self.cursor.close()
 
 
