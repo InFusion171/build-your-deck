@@ -21,15 +21,6 @@ class Database:
 
         return False
 
-    def createTopPlayersDatabase(self, top_players: dict):
-        player_list = [{'playerTag' : tag, 'elo': elo} for elo, tag in top_players.items()]
-
-        df = pd.DataFrame(player_list)
-        df.to_sql(self.table_name, self.db_conn, if_exists='replace', index=False)
-
-    def get_locations(self):
-        records = self.exec_query()
-
     def exec_query(self, query: str) -> list[Any]:
         self.cursor.execute(query)
 
