@@ -30,13 +30,11 @@ class ClashRoyaleApi:
 
         self.location_db.set_locations(self.location_list)
 
+        return self.location_list
 
-    def get_location_list_from_db(self) -> dict:
-
-        self.location_db.get_locations()
 
     def get_location_list_from_api(self) -> dict:
-        locationListResponse = ApiRequest.request(self.clashRoyalApiUrl + self.locationsListEndpoint, self.headerForApi)
+        locationListResponse = ApiRequest.request(self.clash_royal_api_url + self.locations_list_endpoint, self.header_for_api)
 
         for item in locationListResponse['items']:
             if(item['isCountry'] == False):
@@ -49,10 +47,10 @@ class ClashRoyaleApi:
     def create_top_players_list(self) -> SortedDict:
         self.sortedTopPlayerMap = SortedDict()
 
-        for _, locationId in self.locationMap.items():
-            topPlayersResponse = ApiRequest.request(self.clashRoyalApiUrl + 
-                                                   self.rankingListPathOfLegendsForLocationEndpoint.replace('LOCATION_ID', str(locationId)) + '?limit=50',
-                                                   self.headerForApi)
+        for _, locationId in self.location_list.items():
+            topPlayersResponse = ApiRequest.request(self.clash_royal_api_url + 
+                                                   self.ranking_list_path_of_legends_location_endpoint.replace('LOCATION_ID', str(locationId)) + '?limit=50',
+                                                   self.header_for_api)
 
             if(topPlayersResponse == None):
                 continue
