@@ -10,7 +10,7 @@ class ClashRoyaleApi:
         self.rankingListPathOfLegendsForLocationEndpoint = '/locations/LOCATION_ID/pathoflegend/players'
         self.locationsListEndpoint = '/locations'
 
-    def createLocationList(self) -> dict:
+    def create_location_list(self) -> dict:
         locationListResponse = ApiRequest.request(self.clashRoyalApiUrl + self.locationsListEndpoint, self.headerForApi)
 
         self.locationMap = dict()
