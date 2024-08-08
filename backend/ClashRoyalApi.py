@@ -1,7 +1,7 @@
 import os
 from sortedcontainers import SortedDict
 
-import ApiRequest
+from ApiRequest import ApiRequest
 
 class ClashRoyaleApi:
     def __init__(self) -> None:
@@ -23,7 +23,7 @@ class ClashRoyaleApi:
 
         return self.locationMap
 
-    def createTopPlayersList(self) -> SortedDict:
+    def create_top_players_list(self) -> SortedDict:
         self.sortedTopPlayerMap = SortedDict()
 
         for _, locationId in self.locationMap.items():
