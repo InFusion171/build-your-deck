@@ -1,26 +1,9 @@
 import os
-import requests
 from dotenv import load_dotenv
-import time
 from sortedcontainers import SortedDict
 
-import json
+import ApiRequest
 
-class ApiRequest:
-    def request(url: str, header: str):
-        response = requests.get(url, headers=header)
-
-        time.sleep(1)
-
-        if(response.status_code != 200):
-            print('Something went wrong.')
-            print(f'URL: {url}')
-            print(f'response: {response.text}')
-
-            return None
-
-
-        return response.json()
 
 class clashRoyaleApi:
     def __init__(self) -> None:
