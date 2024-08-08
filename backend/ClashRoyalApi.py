@@ -45,17 +45,17 @@ class ClashRoyaleApi:
         return self.location_list
 
     def create_top_players_list(self) -> SortedDict:
-        self.sortedTopPlayerMap = SortedDict()
+        self.sorted_top_player = SortedDict()
 
         for _, locationId in self.location_list.items():
-            topPlayersResponse = ApiRequest.request(self.clash_royal_api_url + 
+            top_players_response = ApiRequest.request(self.clash_royal_api_url + 
                                                    self.ranking_list_path_of_legends_location_endpoint.replace('LOCATION_ID', str(locationId)) + '?limit=50',
                                                    self.header_for_api)
 
-            if(topPlayersResponse == None):
+            if(top_players_response == None):
                 continue
 
-            for player in topPlayersResponse['items']:
-                self.sortedTopPlayerMap[player['eloRating']] = player['tag']
+            for player in top_players_response['items']:
+                self.sorted_top_player[player['eloRating']] = player['tag']
 
-        return self.sortedTopPlayerMap
+        return self.sorted_top_player

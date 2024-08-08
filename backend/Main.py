@@ -8,9 +8,6 @@ def main():
 
     clashApi = ClashRoyaleApi()
 
-    clashApi.createLocationList()
-
-    clashApi.createTopPlayersList()
 
 if __name__ == '__main__':
     main()
