@@ -31,7 +31,7 @@ class Database:
         return self.cursor.fetchall()
 
     def __del__(self):
-        self.db_conn.close()
         self.cursor.close()
+        self.db_conn.close()
 
 

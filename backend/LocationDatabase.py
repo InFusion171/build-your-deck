@@ -13,6 +13,6 @@ class LocationDatabase(Database):
     def set_locations(self, locations: dict) -> None:
         self.open_db_connection()
 
-        df = pd.DataFrame(locations)
+        df = pd.DataFrame([locations])
 
         df.to_sql(self.table_name, self.db_conn, if_exists='replace')

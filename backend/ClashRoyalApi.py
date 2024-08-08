@@ -5,7 +5,7 @@ from ApiRequest import ApiRequest
 from LocationDatabase import LocationDatabase
 
 class ClashRoyaleApi:
-    def __init__(self, location_db_path = '') -> None:
+    def __init__(self, location_db_path) -> None:
         self.clash_royal_api_url = 'https://api.clashroyale.com/v1'
         self.header_for_api =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
         self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
