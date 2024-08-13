@@ -1,13 +1,16 @@
 
 from numpy import sort
+from sortedcontainers import SortedDict
 from ApiRequest import ApiRequest
 import urllib.parse
 
-class Player:
-    def __init__(self, battlelog_url: str, top_players_url: str, api_header: str) -> None:
+class PlayerApi:
+    def __init__(self, battlelog_url: str, top_players_url: str, api_header: str, location_list: dict) -> None:
         self.battlelog_url = battlelog_url
         self.top_players_url = top_players_url
         self.api_header = api_header
+
+        self.location_list = location_list
 
     def get_winning_deck(self, game):
         player_crowns = game['team'][0]['crowns']
@@ -41,3 +44,19 @@ class Player:
             player_winning_decks[deck] = deck
 
         return player_winning_decks
+    
+    def get_top_players_list(self, player_limit: int) -> SortedDict:
+        sorted_top_player = SortedDict()
+
+        for _, locationId in self.location_list.items():
+            top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
+                                                        f'?limit={player_limit}',
+                                                        self.api_header)
+
+            if(top_players_response == None):
+                continue
+
+            for player in top_players_response['items']:
+                sorted_top_player[player['eloRating']] = player['tag']
+
+        return sorted_top_player
