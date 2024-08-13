@@ -24,7 +24,7 @@ class Database:
         self.connection = sqlite3.connect(self.database_path)
         self.cursor = self.connection.cursor()
 
-        return self
+        return self, self.database_exists()
 
     def database_exists(self) -> bool:
         return os.path.isfile(self.database_path)

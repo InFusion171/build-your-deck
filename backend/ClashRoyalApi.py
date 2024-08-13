@@ -15,47 +15,51 @@ class ClashRoyaleApi:
         self.location_db_path = location_db_path
 
         self.location_list = dict()
+        self.sorted_top_player = SortedDict()
 
-    def get_location_list(self):
+    def get_location_list(self) -> dict:
         if(len(self.location_list) != 0):
             return self.location_list
         
-        self.location_db = LocationDatabase(self.location_db_path, self.location_table_name)
+        with LocationDatabase(self.location_db_path, self.location_table_name) as (database, exists):
+            if exists:
+                self.location_list = database.get_locations()
+                return self.location_list
+            
+            self.location_list = self.get_location_list_from_api()
 
-        if(self.location_db.check_database_exists()):
-            self.location_list = self.location_db.get_locations()
+            database.set_locations(self.location_list)
+            
             return self.location_list
-        
-        self.location_list = self.get_location_list_from_api()
-
-        self.location_db.set_locations(self.location_list)
-
-        return self.location_list
 
 
     def get_location_list_from_api(self) -> dict:
         locationListResponse = ApiRequest.request(self.clash_royal_api_url + self.locations_list_endpoint, self.header_for_api)
 
+        location_list = dict()
+
         for item in locationListResponse['items']:
             if(item['isCountry'] == False):
                 continue
 
-            self.location_list[item['name']] = item['id']
+            location_list[item['name']] = item['id']
 
-        return self.location_list
+        return location_list
 
-    def create_top_players_list(self) -> SortedDict:
-        self.sorted_top_player = SortedDict()
+    def create_top_players_list(self, player_limit: int) -> SortedDict:
+        sorted_top_player = SortedDict()
 
         for _, locationId in self.location_list.items():
             top_players_response = ApiRequest.request(self.clash_royal_api_url + 
-                                                   self.ranking_list_path_of_legends_location_endpoint.replace('LOCATION_ID', str(locationId)) + '?limit=50',
+                                                   self.ranking_list_path_of_legends_location_endpoint.replace('LOCATION_ID', str(locationId)) + f'?limit={player_limit}',
                                                    self.header_for_api)
 
             if(top_players_response == None):
                 continue
 
             for player in top_players_response['items']:
-                self.sorted_top_player[player['eloRating']] = player['tag']
+                sorted_top_player[player['eloRating']] = player['tag']
 
-        return self.sorted_top_player
+        self.sorted_top_player = sorted_top_player
+
+        return sorted_top_player
