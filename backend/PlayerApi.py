@@ -24,7 +24,7 @@ class PlayerApi:
             else:
                 deck.append(card['id'])
 
-        return tuple(sort(deck))
+        return str(tuple(sort(deck)))
 
     def get_winning_decks(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
@@ -37,7 +37,7 @@ class PlayerApi:
         player_winning_decks = dict()
 
         for games in battlelog:
-            if games['type'] is not 'pathOfLegend':
+            if not ('pathOfLegend' in games['type']):
                 continue
 
             deck = self.__get_winning_deck(games)

@@ -31,15 +31,14 @@ class ClashRoyaleApi:
                               self.api_header,
                               self.location_list)
         
-        self.sorted_top_player = playerApi.get_top_players(20)
+        self.sorted_top_player = playerApi.get_top_players(1)
 
         for _, player_tag in self.sorted_top_player.items():
             self.top_player_decks = self.top_player_decks | playerApi.get_winning_decks(player_tag)
 
-        j = json.dumps(self.top_player_decks, indent=4)
 
         with open('top_player_decks.json', 'w') as f:
-            print >> f, j
+            json.dump(self.top_player_decks, f, indent=4)
 
 
 

@@ -9,6 +9,8 @@ class LocationApi:
         self.location_db_path = location_db_path
         self.location_table_name = location_table_name
 
+        self.location_list = dict()
+
     def create_and_get_locations(self) -> dict:
         if(len(self.location_list) != 0):
             return self.location_list

@@ -8,7 +8,7 @@ def main():
 
     clashApi = ClashRoyaleApi('DB/countries.db')
 
-   
+    clashApi.setup()
 
 
 if __name__ == '__main__':
