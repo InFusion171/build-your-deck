@@ -6,13 +6,12 @@ class LocationDatabase(Database):
         super().__init__(database_path, table_name)
 
     def get_locations(self) -> dict:
-        results = self.exec_query(f'SELECT * FROM {self.table_name}')
+        with LocationDatabase(self.database_path, self.table_name) as database:
+            results = database.exec_query(f'SELECT * FROM {self.table_name}')
 
         return {row[0] : row[1] for row in results}
     
     def set_locations(self, locations: dict) -> None:
-        self.open_db_connection()
-
-        df = pd.DataFrame([locations])
-
-        df.to_sql(self.table_name, self.db_conn, if_exists='replace')
+        with LocationDatabase(self.database_path, self.table_name) as database:
+            df = pd.DataFrame([locations])
+            df.to_sql(self.table_name, database.connection, if_exists='replace')
