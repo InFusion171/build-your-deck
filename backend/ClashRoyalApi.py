@@ -1,11 +1,14 @@
+import json
 import os
 from sortedcontainers import SortedDict
 
+from LocationApi import LocationApi
+from PlayerApi import PlayerApi
 
 class ClashRoyaleApi:
     def __init__(self, location_db_path) -> None:
         self.clash_royal_api_url = 'https://api.clashroyale.com/v1'
-        self.header_for_api =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
+        self.api_header =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
         self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
         self.player_battlelog_endpoint = '/players/PLAYERTAG/battlelog'
         self.locations_list_endpoint = '/locations'
@@ -13,11 +16,31 @@ class ClashRoyaleApi:
         self.location_table_name = 'countries'
         self.location_db_path = location_db_path
 
-        self.location_list = dict()
-        self.sorted_top_player = SortedDict()
-        self.all_top_player_decks = dict()
-
+        self.top_player_decks = dict()
     
+    def setup(self):
+        locationApi = LocationApi(self.clash_royal_api_url + self.locations_list_endpoint,
+                                  self.api_header,
+                                  self.location_db_path,
+                                  self.location_table_name)
+
+        self.location_list = locationApi.create_and_get_locations()
+
+        playerApi = PlayerApi(self.clash_royal_api_url + self.player_battlelog_endpoint,
+                              self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
+                              self.api_header,
+                              self.location_list)
+        
+        self.sorted_top_player = playerApi.get_top_players(20)
+
+        for _, player_tag in self.sorted_top_player.items():
+            self.top_player_decks = self.top_player_decks | playerApi.get_winning_decks(player_tag)
+
+        j = json.dumps(self.top_player_decks, indent=4)
+
+        with open('top_player_decks.json', 'w') as f:
+            print >> f, j
+
 
 
 

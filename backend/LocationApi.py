@@ -9,7 +9,7 @@ class LocationApi:
         self.location_db_path = location_db_path
         self.location_table_name = location_table_name
 
-    def create_and_get_location_list(self) -> dict:
+    def create_and_get_locations(self) -> dict:
         if(len(self.location_list) != 0):
             return self.location_list
         
@@ -18,14 +18,14 @@ class LocationApi:
                 self.location_list = database.get_locations()
                 return self.location_list
             
-            self.location_list = self.get_location_list_from_api()
+            self.location_list = self.__get_location_list_from_api()
 
             database.set_locations(self.location_list)
             
             return self.location_list
 
 
-    def get_location_list_from_api(self) -> dict:
+    def __get_location_list_from_api(self) -> dict:
         locationListResponse = ApiRequest.request(self.location_list_url, self.api_header)
 
         location_list = dict()

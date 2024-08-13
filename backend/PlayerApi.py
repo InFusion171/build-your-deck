@@ -12,7 +12,7 @@ class PlayerApi:
 
         self.location_list = location_list
 
-    def get_winning_deck(self, game):
+    def __get_winning_deck(self, game):
         player_crowns = game['team'][0]['crowns']
         enemy_crowns = game['opponent'][0]['crowns']
 
@@ -26,7 +26,7 @@ class PlayerApi:
 
         return tuple(sort(deck))
 
-    def get_player_winning_decks(self, player_tag: str):
+    def get_winning_decks(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
                                        self.api_header)
 
@@ -40,12 +40,12 @@ class PlayerApi:
             if games['type'] is not 'pathOfLegend':
                 continue
 
-            deck = self.get_winning_deck(games)
+            deck = self.__get_winning_deck(games)
             player_winning_decks[deck] = deck
 
         return player_winning_decks
     
-    def get_top_players_list(self, player_limit: int) -> SortedDict:
+    def get_top_players(self, player_limit: int) -> SortedDict:
         sorted_top_player = SortedDict()
 
         for _, locationId in self.location_list.items():
