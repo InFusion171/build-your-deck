@@ -9,6 +9,7 @@ class ClashRoyaleApi:
         self.clash_royal_api_url = 'https://api.clashroyale.com/v1'
         self.header_for_api =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
         self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
+        self.player_battlelog_endpoint = '/players/PLAYERTAG/battlelog'
         self.locations_list_endpoint = '/locations'
 
         self.location_table_name = 'countries'
@@ -16,6 +17,11 @@ class ClashRoyaleApi:
 
         self.location_list = dict()
         self.sorted_top_player = SortedDict()
+        self.all_top_player_decks = dict()
+
+    
+
+
 
     def create_location_list(self) -> dict:
         if(len(self.location_list) != 0):
