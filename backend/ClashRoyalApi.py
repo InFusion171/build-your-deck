@@ -17,7 +17,7 @@ class ClashRoyaleApi:
         self.location_list = dict()
         self.sorted_top_player = SortedDict()
 
-    def get_location_list(self) -> dict:
+    def create_location_list(self) -> dict:
         if(len(self.location_list) != 0):
             return self.location_list
         

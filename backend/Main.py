@@ -8,7 +8,7 @@ def main():
 
     clashApi = ClashRoyaleApi('DB/countries.db')
 
-    print(clashApi.get_location_list())
+    print(clashApi.create_location_list())
 
 
 if __name__ == '__main__':
