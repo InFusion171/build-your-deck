@@ -18,7 +18,7 @@ class ClashRoyaleApi:
 
         self.top_player_decks = dict()
     
-    def setup(self):
+    def run_api(self):
         locationApi = LocationApi(self.clash_royal_api_url + self.locations_list_endpoint,
                                   self.api_header,
                                   self.location_db_path,
