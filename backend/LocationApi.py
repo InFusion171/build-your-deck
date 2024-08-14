@@ -11,31 +11,32 @@ class LocationApi:
 
         self.location_list = dict()
 
-    def create_and_get_locations(self) -> dict:
+    def create_and_get_locations(self) -> list[dict]:
         if(len(self.location_list) != 0):
             return self.location_list
         
-        with LocationDatabase(self.location_db_path, self.location_table_name) as (database, exists):
-            if exists:
-                self.location_list = database.get_locations()
-                return self.location_list
-            
-            self.location_list = self.__get_location_list_from_api()
+        with LocationDatabase(self.location_db_path, self.location_table_name) as database:
+            self.locations = database.get_locations()
 
-            database.set_locations(self.location_list)
+            if len(self.locations) != 0:
+                return self.locations
             
+            self.locations = self.__get_location_list_from_api()
+            
+            database.set_locations(self.locations)
+
             return self.location_list
 
 
-    def __get_location_list_from_api(self) -> dict:
+    def __get_location_list_from_api(self) -> list[dict]:
         locationListResponse = ApiRequest.request(self.location_list_url, self.api_header)
 
-        location_list = dict()
+        location_list = []
 
         for item in locationListResponse['items']:
             if(item['isCountry'] == False):
                 continue
 
-            location_list[item['name']] = item['id']
+            location_list.append({item['id']: item['name']})
 
         return location_list

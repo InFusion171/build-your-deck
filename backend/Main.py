@@ -6,9 +6,9 @@ from ClashRoyalApi import ClashRoyaleApi
 def main():
     load_dotenv()
 
-    clashApi = ClashRoyaleApi('DB/Location.db')
+    clashApi = ClashRoyaleApi('DB/Location.sqlite')
 
-    clashApi.setup()
+    clashApi.run_api()
 
 
 if __name__ == '__main__':

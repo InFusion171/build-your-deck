@@ -4,6 +4,7 @@ from sortedcontainers import SortedDict
 
 from LocationApi import LocationApi
 from PlayerApi import PlayerApi
+from DeckDatabase import DeckDatabase
 
 class ClashRoyaleApi:
     def __init__(self, location_db_path) -> None:
@@ -26,14 +27,16 @@ class ClashRoyaleApi:
 
         self.location_list = locationApi.create_and_get_locations()
 
+        print(self.location_list)
+
         playerApi = PlayerApi(self.clash_royal_api_url + self.player_battlelog_endpoint,
                               self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
                               self.api_header,
                               self.location_list)
         
 
-        with open('top_player_decks.json', 'w') as f:
-            json.dump(self.top_player_decks, f, indent=4)
+        #with DeckDatabase('DB/Deck.sqlite', 'cards') as (database, _):
+         #   database.add_decks(playerApi.create_and_get_top_player_decks(1))
 
 
 

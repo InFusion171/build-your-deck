@@ -13,8 +13,8 @@ class PlayerApi:
 
         self.location_list = location_list
 
-        self.sorted_player_decks = None
-        self.top_player_decks = None
+        self.sorted_player_decks = SortedDict()
+        self.top_player_decks = dict()
 
     def __get_winning_deck(self, game):
         player_crowns = game['team'][0]['crowns']
@@ -40,7 +40,7 @@ class PlayerApi:
 
         if battlelog is None:
             print('cant get the battle log')
-            return
+            return dict()
         
         player_winning_decks = dict()
 
@@ -54,7 +54,7 @@ class PlayerApi:
         return player_winning_decks
     
     def create_and_get_top_players(self, player_limit: int) -> SortedDict:
-        if self.sorted_player_decks is not None:
+        if len(self.sorted_player_decks) != 0:
             return self.sorted_player_decks
 
         sorted_top_player = SortedDict()
@@ -75,10 +75,19 @@ class PlayerApi:
         return sorted_top_player
     
     def create_and_get_top_player_decks(self, player_count_per_region: int):
-        if self.top_player_decks is not None:
+        if len(self.top_player_decks) != 0:
             return self.top_player_decks
-        
-        for player_tag in self.create_and_get_top_players(player_count_per_region).values():
-            self.top_player_decks = self.top_player_decks | self.get_winning_decks(player_tag)
+    
+        deck1 = Deck('1', '2', '3', '4', '5', '6', '7', '8')
+        deck2 = Deck('11', '22', '33', '44', '55', '66', '77', '88')
+
+        a = dict()
+        a[deck1] = deck1
+        a[deck2] = deck2
+
+        self.top_player_decks = a
+
+        #for player_tag in self.create_and_get_top_players(player_count_per_region).values():
+            #self.top_player_decks = self.top_player_decks | self.get_winning_decks(player_tag)
 
         return self.top_player_decks
