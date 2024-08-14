@@ -13,6 +13,9 @@ class PlayerApi:
 
         self.location_list = location_list
 
+        self.sorted_player_decks = None
+        self.top_player_decks = None
+
     def __get_winning_deck(self, game):
         player_crowns = game['team'][0]['crowns']
         enemy_crowns = game['opponent'][0]['crowns']
@@ -50,10 +53,13 @@ class PlayerApi:
 
         return player_winning_decks
     
-    def get_top_players(self, player_limit: int) -> SortedDict:
+    def create_and_get_top_players(self, player_limit: int) -> SortedDict:
+        if self.sorted_player_decks is not None:
+            return self.sorted_player_decks
+
         sorted_top_player = SortedDict()
 
-        for _, locationId in self.location_list.items():
+        for locationId in self.location_list.values():
             top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
                                                         f'?limit={player_limit}',
                                                         self.api_header)
@@ -64,4 +70,15 @@ class PlayerApi:
             for player in top_players_response['items']:
                 sorted_top_player[player['eloRating']] = player['tag']
 
+        self.sorted_top_player = sorted_top_player
+
         return sorted_top_player
+    
+    def create_and_get_top_player_decks(self, player_count_per_region: int):
+        if self.top_player_decks is not None:
+            return self.top_player_decks
+        
+        for player_tag in self.create_and_get_top_players(player_count_per_region).values():
+            self.top_player_decks = self.top_player_decks | self.get_winning_decks(player_tag)
+
+        return self.top_player_decks
