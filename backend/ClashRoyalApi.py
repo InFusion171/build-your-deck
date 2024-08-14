@@ -13,7 +13,7 @@ class ClashRoyaleApi:
         self.player_battlelog_endpoint = '/players/PLAYERTAG/battlelog'
         self.locations_list_endpoint = '/locations'
 
-        self.location_table_name = 'countries'
+        self.location_table_name = 'locations'
         self.location_db_path = location_db_path
 
         self.top_player_decks = dict()

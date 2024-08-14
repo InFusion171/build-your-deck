@@ -6,7 +6,7 @@ from ClashRoyalApi import ClashRoyaleApi
 def main():
     load_dotenv()
 
-    clashApi = ClashRoyaleApi('DB/countries.db')
+    clashApi = ClashRoyaleApi('DB/Location.db')
 
     clashApi.setup()
 
