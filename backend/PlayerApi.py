@@ -2,6 +2,7 @@
 from numpy import sort
 from sortedcontainers import SortedDict
 from ApiRequest import ApiRequest
+from Deck import Deck
 import urllib.parse
 
 class PlayerApi:
@@ -16,15 +17,19 @@ class PlayerApi:
         player_crowns = game['team'][0]['crowns']
         enemy_crowns = game['opponent'][0]['crowns']
 
-        deck = []
+        cards = []
 
         for card in game['team' if player_crowns > enemy_crowns else 'opponent'][0]['cards']:
             if 'maxEvolutionLevel' in card:
-                deck.insert(0, card['id'])
+                cards.insert(0, card['id'])
             else:
-                deck.append(card['id'])
+                cards.append(card['id'])
 
-        return str(tuple(sort(deck)))
+        if len(cards) != 8:
+            print('We need to have 8 cards')
+            return None
+
+        return Deck(*cards)
 
     def get_winning_decks(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 

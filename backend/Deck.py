@@ -1,6 +1,4 @@
 
-from numpy import sort
-
 
 class Deck:
     def __init__(self, card_evo1: str, card_evo2: str, card3: str, card4: str, 
