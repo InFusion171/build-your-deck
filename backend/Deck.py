@@ -15,5 +15,8 @@ class Deck:
     
     def __hash__(self) -> int:
         return hash(self.__str__())
+    
+    def get_deck(self) -> list[str]:
+        return self.card_evos + self.cards
 
     
