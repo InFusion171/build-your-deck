@@ -12,9 +12,7 @@ class Database:
         self.connection = self.engine.connect()
 
     def __enter__(self):
-
         return self
-
 
     def exec_query(self, query):
         execute = self.connection.execute(query)

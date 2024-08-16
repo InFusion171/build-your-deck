@@ -33,4 +33,4 @@ class LocationDatabase(Database):
                      'LOCATION_NAME': [name for name in locations.values()]}
 
             df = pd.DataFrame(table)
-            df.to_sql(self.table_name, database.connection, if_exists='replace')
+            df.to_sql(self.table_name, database.connection, if_exists='replace', index=False)

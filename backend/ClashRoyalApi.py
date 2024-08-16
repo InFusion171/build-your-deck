@@ -7,7 +7,7 @@ from PlayerApi import PlayerApi
 from DeckDatabase import DeckDatabase
 
 class ClashRoyaleApi:
-    def __init__(self, location_db_path) -> None:
+    def __init__(self, location_db_path: str, deck_db_path: str) -> None:
         self.clash_royal_api_url = 'https://api.clashroyale.com/v1'
         self.api_header =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
         self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
@@ -16,6 +16,9 @@ class ClashRoyaleApi:
 
         self.location_table_name = 'locations'
         self.location_db_path = location_db_path
+
+        self.deck_table_name = 'decks'
+        self.deck_db_path = deck_db_path
 
         self.top_player_decks = dict()
     
@@ -27,7 +30,6 @@ class ClashRoyaleApi:
 
         self.location_list = locationApi.create_and_get_locations()
 
-        print(self.location_list)
 
         playerApi = PlayerApi(self.clash_royal_api_url + self.player_battlelog_endpoint,
                               self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
@@ -35,8 +37,8 @@ class ClashRoyaleApi:
                               self.location_list)
         
 
-        #with DeckDatabase('DB/Deck.sqlite', 'cards') as (database, _):
-         #   database.add_decks(playerApi.create_and_get_top_player_decks(1))
+        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
+            database.add_decks(playerApi.create_and_get_top_player_decks(1))
 
 
 

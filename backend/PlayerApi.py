@@ -82,8 +82,8 @@ class PlayerApi:
         deck2 = Deck('11', '22', '33', '44', '55', '66', '77', '88')
 
         a = dict()
-        a[deck1] = deck1
-        a[deck2] = deck2
+        a[deck1.__hash__()] = deck1
+        a[deck2.__hash__()] = deck2
 
         self.top_player_decks = a
 

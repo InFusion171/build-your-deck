@@ -16,7 +16,7 @@ class DeckDatabase(Database):
         self.metadata = sql.MetaData()
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
-                                    sql.Column('DECK_ID', sql.Integer(), primary_key=True),
+                                    sql.Column('DECK_ID', sql.CHAR(10), primary_key=True),
                                     sql.Column('CARD_1_EVO', sql.Integer(), nullable=False),
                                     sql.Column('CARD_2_EVO', sql.Integer(), nullable=False),
                                     sql.Column('CARD_3', sql.Integer(), nullable=False),
@@ -49,4 +49,4 @@ class DeckDatabase(Database):
         df = pd.DataFrame(decks_table)
 
         with DeckDatabase(self.database_path, self.table_name) as database:
-            df.to_sql(self.table_name, con=database, if_exists='append')
+            df.to_sql(self.table_name, con=database.connection, if_exists='append', index=False)

@@ -1,4 +1,4 @@
-
+import hashlib
 
 class Deck:
     def __init__(self, card_evo1: int, card_evo2: int, card3: int, card4: int, 
@@ -13,8 +13,11 @@ class Deck:
     def __str__(self) -> str:
         return ','.join(self.card_evos + self.cards)
     
-    def __hash__(self) -> int:
-        return hash(self.__str__())
+    def __hash__(self) -> str:
+        hasher = hashlib.sha1(self.__str__().encode())
+        
+        # 10 hash digits are enough
+        return hasher.hexdigest()[2:12]
     
     def __eq__(self, other):
         return self.__str__() == other.__str__()
