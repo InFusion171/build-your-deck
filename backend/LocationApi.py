@@ -9,11 +9,11 @@ class LocationApi:
         self.location_db_path = location_db_path
         self.location_table_name = location_table_name
 
-        self.location_list = dict()
+        self.locations = dict()
 
-    def create_and_get_locations(self) -> list[dict]:
-        if(len(self.location_list) != 0):
-            return self.location_list
+    def create_and_get_locations(self) -> dict[str, str]:
+        if len(self.locations) != 0:
+            return self.locations
         
         with LocationDatabase(self.location_db_path, self.location_table_name) as database:
             self.locations = database.get_locations()
@@ -22,21 +22,21 @@ class LocationApi:
                 return self.locations
             
             self.locations = self.__get_location_list_from_api()
-            
+
             database.set_locations(self.locations)
 
-            return self.location_list
+            return self.locations
 
 
-    def __get_location_list_from_api(self) -> list[dict]:
+    def __get_location_list_from_api(self) -> dict[str, str]:
         locationListResponse = ApiRequest.request(self.location_list_url, self.api_header)
 
-        location_list = []
+        locations = dict()
 
         for item in locationListResponse['items']:
             if(item['isCountry'] == False):
                 continue
 
-            location_list.append({item['id']: item['name']})
+            locations[item['id']] = item['name']
 
-        return location_list
+        return locations
