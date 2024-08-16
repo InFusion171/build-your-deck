@@ -1,3 +1,4 @@
+from collections import defaultdict
 import pandas as pd
 from Database import Database
 from Deck import Deck
@@ -16,8 +17,8 @@ class DeckDatabase(Database):
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
                                     sql.Column('DECK_ID', sql.Integer(), primary_key=True),
-                                    sql.Column('CARD_EVO_1', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_EVO_2', sql.Integer(), nullable=False),
+                                    sql.Column('CARD_1_EVO', sql.Integer(), nullable=False),
+                                    sql.Column('CARD_2_EVO', sql.Integer(), nullable=False),
                                     sql.Column('CARD_3', sql.Integer(), nullable=False),
                                     sql.Column('CARD_4', sql.Integer(), nullable=False),
                                     sql.Column('CARD_5', sql.Integer(), nullable=False),
@@ -28,13 +29,24 @@ class DeckDatabase(Database):
         
         self.metadata.create_all(self.engine)
         
-    def add_decks(self, decks: dict):
-        print(decks)
+    def add_decks(self, decks: dict[int, Deck]):
+        decks_table = defaultdict(list)
 
-        deck_id = [d.__hash__() for d in decks.keys()]
-        decks = [d.get_deck() for d in decks.values()]
+        for id, deck in decks.items():
+            d = deck.get_deck()
 
-        df = pd.DataFrame({'DECK_ID': deck_id, 'DECKS': decks})
+            decks_table['DECK_ID'].append(id)
+            decks_table['CARD_1_EVO'].append(d[0])
+            decks_table['CARD_2_EVO'].append(d[1])
+            decks_table['CARD_3'].append(d[2])
+            decks_table['CARD_4'].append(d[3])
+            decks_table['CARD_5'].append(d[4])
+            decks_table['CARD_6'].append(d[5])
+            decks_table['CARD_7'].append(d[6])
+            decks_table['CARD_8'].append(d[7])
 
-        with DeckDatabase(self.database_path, self.table_name) as (database, _):
-            df.to_sql(self.table_name, con=database, dtype={'DECK_ID': 'INTEGER PRIMARY KEY'})
+
+        df = pd.DataFrame(decks_table)
+
+        with DeckDatabase(self.database_path, self.table_name) as database:
+            df.to_sql(self.table_name, con=database, if_exists='append')

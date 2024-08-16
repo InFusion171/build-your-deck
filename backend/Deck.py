@@ -1,8 +1,8 @@
 
 
 class Deck:
-    def __init__(self, card_evo1: str, card_evo2: str, card3: str, card4: str, 
-                 card5: str, card6: str, card7: str, card8: str) -> None:
+    def __init__(self, card_evo1: int, card_evo2: int, card3: int, card4: int, 
+                 card5: int, card6: int, card7: int, card8: int) -> None:
         
         self.card_evos = [card_evo1, card_evo2]
         self.card_evos.sort()
@@ -19,8 +19,7 @@ class Deck:
     def __eq__(self, other):
         return self.__str__() == other.__str__()
 
-
-    def get_deck(self) -> list[str]:
+    def get_deck(self) -> list[int]:
         return self.card_evos + self.cards
 
     
