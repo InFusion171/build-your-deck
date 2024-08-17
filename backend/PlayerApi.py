@@ -1,5 +1,3 @@
-
-from numpy import sort
 from sortedcontainers import SortedDict
 from ApiRequest import ApiRequest
 from Deck import Deck
@@ -13,7 +11,7 @@ class PlayerApi:
 
         self.location_list = location_list
 
-        self.sorted_player_decks = SortedDict()
+        self.top_player = dict()
         self.top_player_decks = dict()
 
     def __get_winning_deck(self, game):
@@ -53,11 +51,9 @@ class PlayerApi:
 
         return player_winning_decks
     
-    def create_and_get_top_players(self, player_limit: int) -> SortedDict:
-        if len(self.sorted_player_decks) != 0:
-            return self.sorted_player_decks
-
-        sorted_top_player = SortedDict()
+    def create_and_get_top_players(self, player_limit: int) -> dict:
+        if len(self.top_player) != 0:
+            return self.top_player
 
         for locationId in self.location_list.values():
             top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
@@ -68,11 +64,9 @@ class PlayerApi:
                 continue
 
             for player in top_players_response['items']:
-                sorted_top_player[player['eloRating']] = player['tag']
+                self.top_player[player['eloRating']] = player['tag']
 
-        self.sorted_top_player = sorted_top_player
-
-        return sorted_top_player
+        return self.top_player
     
     def create_and_get_top_player_decks(self, player_count_per_region: int):
         if len(self.top_player_decks) != 0:
