@@ -64,7 +64,7 @@ class PlayerApi:
                 continue
 
             for player in top_players_response['items']:
-                self.top_player[player['eloRating']] = player['tag']
+                self.top_player[player['tag']] = player['eloRating']
 
         return self.top_player
     
@@ -72,8 +72,8 @@ class PlayerApi:
         if len(self.top_player_decks) != 0:
             return self.top_player_decks
     
-        deck1 = Deck('1', '2', '3', '4', '5', '6', '7', '8')
-        deck2 = Deck('11', '22', '33', '44', '55', '66', '77', '88')
+        deck1 = Deck('11', '2', '3', '4', '5', '6', '7', '8', '20240811')
+        deck2 = Deck('111', '22', '33', '44', '55', '66', '77', '88', '20240811')
 
         a = dict()
         a[deck1.__hash__()] = deck1
@@ -81,7 +81,7 @@ class PlayerApi:
 
         self.top_player_decks = a
 
-        #for player_tag in self.create_and_get_top_players(player_count_per_region).values():
+        #for player_tag in self.create_and_get_top_players(player_count_per_region).keys():
             #self.top_player_decks = self.top_player_decks | self.get_winning_decks(player_tag)
 
         return self.top_player_decks

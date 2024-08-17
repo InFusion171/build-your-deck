@@ -9,6 +9,19 @@ class DeckDatabase(Database):
     def __init__(self, database_path: str, table_name: str):
         super().__init__(database_path, table_name)
 
+        self.column_names = {
+            'deck_id': 'DECK_ID',
+            'card_1_evo': 'CARD_1_EVO',
+            'card_2_evo': 'CARD_2_EVO',
+            'card_3': 'CARD_3',
+            'card_4': 'CARD_4',
+            'card_5': 'CARD_5',
+            'card_6': 'CARD_6',
+            'card_7': 'CARD_7',
+            'card_8': 'CARD_8',
+            'play_date': 'PLAY_DATE'
+        }
+
         self.create_table_if_not_exist()
 
         
@@ -16,37 +29,53 @@ class DeckDatabase(Database):
         self.metadata = sql.MetaData()
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
-                                    sql.Column('DECK_ID', sql.CHAR(10), primary_key=True),
-                                    sql.Column('CARD_1_EVO', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_2_EVO', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_3', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_4', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_5', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_6', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_7', sql.Integer(), nullable=False),
-                                    sql.Column('CARD_8', sql.Integer(), nullable=False)
+                                    sql.Column(self.column_names['deck_id'], sql.CHAR(10), primary_key=True),
+                                    sql.Column(self.column_names['card_1_evo'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_2_evo'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_3'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_4'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_5'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_6'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_7'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_8'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['play_date'], sql.CHAR(8), nullable=False)
                                     )
         
         self.metadata.create_all(self.engine)
         
     def add_decks(self, decks: dict[int, Deck]):
-        decks_table = defaultdict(list)
-
-        for id, deck in decks.items():
-            d = deck.get_deck()
-
-            decks_table['DECK_ID'].append(id)
-            decks_table['CARD_1_EVO'].append(d[0])
-            decks_table['CARD_2_EVO'].append(d[1])
-            decks_table['CARD_3'].append(d[2])
-            decks_table['CARD_4'].append(d[3])
-            decks_table['CARD_5'].append(d[4])
-            decks_table['CARD_6'].append(d[5])
-            decks_table['CARD_7'].append(d[6])
-            decks_table['CARD_8'].append(d[7])
-
-
-        df = pd.DataFrame(decks_table)
-
         with DeckDatabase(self.database_path, self.table_name) as database:
-            df.to_sql(self.table_name, con=database.connection, if_exists='append', index=False)
+            transaction = database.connection.begin()
+
+            for id, deck in decks.items():
+
+                self.delete_deck_id_duplicate(database, id)
+
+                play_date, d = deck.get_deck()
+
+                deck_row = {
+                    self.column_names['deck_id']: id,
+                    self.column_names['card_1_evo']: d[0],
+                    self.column_names['card_2_evo']: d[1],
+                    
+                    **{self.column_names[f'card_{card_number}']: d[card_number - 1] 
+                       for card_number in range(3, 9)},
+
+                    self.column_names['play_date']: play_date
+                }
+
+                self.insert(database, deck_row)
+            
+            transaction.commit()
+
+
+       
+    def delete_deck_id_duplicate(self, database, deck_id):
+        database.connection.execute(
+            self.decks_table.delete().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
+        )
+
+    def insert(self, database, values: dict):
+        database.connection.execute(
+            self.decks_table.insert().values(values)
+        )

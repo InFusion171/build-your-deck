@@ -2,8 +2,10 @@ import hashlib
 
 class Deck:
     def __init__(self, card_evo1: int, card_evo2: int, card3: int, card4: int, 
-                 card5: int, card6: int, card7: int, card8: int) -> None:
+                 card5: int, card6: int, card7: int, card8: int, play_date: str) -> None:
         
+        self.play_date = play_date
+
         self.card_evos = [card_evo1, card_evo2]
         self.card_evos.sort()
 
@@ -14,15 +16,14 @@ class Deck:
         return ','.join(self.card_evos + self.cards)
     
     def __hash__(self) -> str:
-        hasher = hashlib.sha1(self.__str__().encode())
+        hasher = hashlib.shake_256(self.__str__().encode())
         
-        # 10 hash digits are enough
-        return hasher.hexdigest()[2:12]
+        return hasher.hexdigest(5)
     
     def __eq__(self, other):
         return self.__str__() == other.__str__()
 
     def get_deck(self) -> list[int]:
-        return self.card_evos + self.cards
+        return self.play_date, self.card_evos + self.cards
 
     
