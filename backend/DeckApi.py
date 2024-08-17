@@ -48,11 +48,11 @@ class DeckApi:
         
         player_winning_decks = dict()
 
-        for games in battlelog:
-            if not ('pathOfLegend' in games['type']):
+        for game in battlelog:
+            if not ('pathOfLegend' in game['type']):
                 continue
 
-            deck = self._get_winning_deck(games)
+            deck = self._get_winning_deck(game)
             player_winning_decks[deck.get_id()] = deck
 
         return player_winning_decks

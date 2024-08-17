@@ -28,9 +28,6 @@ class Deck:
     def get_id(self):
         return self.__hash__()
 
-    def get_deck(self) -> list[int]:
-        return self.play_date, self.card_evos + self.cards
-    
     def build_deck_for_db(self, database: DeckDatabase) -> dict:
         deck_row = {
                     database.column_names['deck_id']: self.get_id(),
