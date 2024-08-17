@@ -43,19 +43,18 @@ class DeckDatabase(Database):
         
         self.metadata.create_all(self.engine)
         
-    def add_decks(self, decks: dict[int, Deck]):
-        with DeckDatabase(self.database_path, self.table_name) as database:
-            transaction = database.connection.begin()
+    def add_decks(self, database: Database, decks: dict[int, Deck]):
+        transaction = database.connection.begin()
 
-            for id, deck in decks.items():
-                build_db_deck = deck.build_deck_for_db()
+        for id, deck in decks.items():
+            build_db_deck = deck.build_deck_for_db()
 
-                if self.deck_id_exists():
-                    self.update_play_date(database, id, build_db_deck)
-                else:
-                    self.insert(database, build_db_deck)
-            
-            transaction.commit()
+            if self.deck_id_exists():
+                self.update_play_date(database, id, build_db_deck)
+            else:
+                self.insert(database, build_db_deck)
+        
+        transaction.commit()
 
     def deck_id_exists(self, database: Database, deck_id):
         exists = database.connection.execute(
