@@ -1,15 +1,19 @@
-from sortedcontainers import SortedDict
 from ApiRequest import ApiRequest
 from Deck import Deck
 import urllib.parse
 
+from DeckDatabase import DeckDatabase
+
 class PlayerApi:
-    def __init__(self, battlelog_url: str, top_players_url: str, api_header: str, location_list: dict) -> None:
+    def __init__(self, battlelog_url: str, top_players_url: str, api_header: str, location_list: dict, deck_db_path:str, deck_table_name: str) -> None:
         self.battlelog_url = battlelog_url
         self.top_players_url = top_players_url
         self.api_header = api_header
 
         self.location_list = location_list
+        self.deck_db_path = deck_db_path
+        self.deck_table_name = deck_table_name
+
 
         self.top_player = dict()
         self.top_player_decks = dict()
@@ -22,15 +26,19 @@ class PlayerApi:
 
         for card in game['team' if player_crowns > enemy_crowns else 'opponent'][0]['cards']:
             if 'maxEvolutionLevel' in card:
-                cards.insert(0, card['id'])
+                cards.insert(0, int(card['id']))
             else:
-                cards.append(card['id'])
+                cards.append(int(card['id']))
 
         if len(cards) != 8:
             print('We need to have 8 cards')
             return None
 
-        return Deck(*cards)
+
+        # get play year date and month
+        play_time = game['battleTime'].strip('T')[0]
+
+        return Deck(*cards, play_time)
 
     def get_winning_decks(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
@@ -47,7 +55,7 @@ class PlayerApi:
                 continue
 
             deck = self.__get_winning_deck(games)
-            player_winning_decks[deck] = deck
+            player_winning_decks[deck.get_id()] = deck
 
         return player_winning_decks
     
@@ -55,7 +63,7 @@ class PlayerApi:
         if len(self.top_player) != 0:
             return self.top_player
 
-        for locationId in self.location_list.values():
+        for locationId in self.location_list.keys():
             top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
                                                         f'?limit={player_limit}',
                                                         self.api_header)
@@ -68,20 +76,22 @@ class PlayerApi:
 
         return self.top_player
     
-    def create_and_get_top_player_decks(self, player_count_per_region: int):
-        if len(self.top_player_decks) != 0:
-            return self.top_player_decks
-    
-        deck1 = Deck('11', '2', '3', '4', '5', '6', '7', '8', '20240811')
+    def write_decks_to_db(self, player_count_per_region: int):
+  
+
+        #test
+        """deck1 = Deck('11', '2', '3', '4', '5', '6', '7', '8', '20240811')
         deck2 = Deck('111', '22', '33', '44', '55', '66', '77', '88', '20240811')
 
         a = dict()
         a[deck1.__hash__()] = deck1
         a[deck2.__hash__()] = deck2
 
-        self.top_player_decks = a
+        self.top_player_decks = a"""
 
-        #for player_tag in self.create_and_get_top_players(player_count_per_region).keys():
-            #self.top_player_decks = self.top_player_decks | self.get_winning_decks(player_tag)
 
-        return self.top_player_decks
+        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
+            for player_tag in self.create_and_get_top_players(player_count_per_region).keys():
+                database.add_decks(self.get_winning_decks(player_tag))
+
+    

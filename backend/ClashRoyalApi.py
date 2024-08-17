@@ -34,11 +34,11 @@ class ClashRoyaleApi:
         playerApi = PlayerApi(self.clash_royal_api_url + self.player_battlelog_endpoint,
                               self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
                               self.api_header,
-                              self.location_list)
+                              self.location_list,
+                              self.deck_db_path,
+                              self.deck_table_name)
         
-
-        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
-            database.add_decks(playerApi.create_and_get_top_player_decks(1))
+        playerApi.write_decks_to_db(100)
 
 
 

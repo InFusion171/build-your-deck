@@ -13,7 +13,7 @@ class Deck:
         self.cards.sort()
 
     def __str__(self) -> str:
-        return ','.join(self.card_evos + self.cards)
+        return ','.join(map(str, self.card_evos + self.cards))
     
     def __hash__(self) -> str:
         hasher = hashlib.shake_256(self.__str__().encode())
@@ -22,6 +22,9 @@ class Deck:
     
     def __eq__(self, other):
         return self.__str__() == other.__str__()
+
+    def get_id(self):
+        return self.__hash__()
 
     def get_deck(self) -> list[int]:
         return self.play_date, self.card_evos + self.cards
