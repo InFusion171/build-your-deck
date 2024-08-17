@@ -1,5 +1,3 @@
-from collections import defaultdict
-import pandas as pd
 from Database import Database
 from Deck import Deck
 

@@ -1,7 +1,5 @@
 import hashlib
 
-from DeckDatabase import DeckDatabase
-
 class Deck:
     def __init__(self, card_evo1: int, card_evo2: int, card3: int, card4: int, 
                  card5: int, card6: int, card7: int, card8: int, play_date: str) -> None:
@@ -28,7 +26,7 @@ class Deck:
     def get_id(self):
         return self.__hash__()
 
-    def build_deck_for_db(self, database: DeckDatabase) -> dict:
+    def build_deck_for_db(self, database) -> dict:
         deck_row = {
                     database.column_names['deck_id']: self.get_id(),
                     database.column_names['card_1_evo']: self.card_evos[0],
