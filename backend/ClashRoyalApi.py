@@ -38,7 +38,7 @@ class ClashRoyaleApi:
                               self.deck_db_path,
                               self.deck_table_name)
         
-        playerApi.write_decks_to_db(100)
+        #playerApi.write_decks_to_db(100)
 
 
 

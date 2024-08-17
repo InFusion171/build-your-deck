@@ -36,9 +36,9 @@ class PlayerApi:
 
 
         # get play year date and month
-        play_time = game['battleTime'].strip('T')[0]
+        play_date = game['battleTime'].split('T')[0]
 
-        return Deck(*cards, play_time)
+        return Deck(*cards, play_date)
 
     def get_winning_decks(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 

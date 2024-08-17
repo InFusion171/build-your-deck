@@ -48,34 +48,36 @@ class DeckDatabase(Database):
             transaction = database.connection.begin()
 
             for id, deck in decks.items():
+                build_db_deck = deck.build_deck_for_db()
 
-                self.delete_deck_id_duplicate(database, id)
-
-                play_date, d = deck.get_deck()
-
-                deck_row = {
-                    self.column_names['deck_id']: id,
-                    self.column_names['card_1_evo']: d[0],
-                    self.column_names['card_2_evo']: d[1],
-                    
-                    **{self.column_names[f'card_{card_number}']: d[card_number - 1] 
-                       for card_number in range(3, 9)},
-
-                    self.column_names['play_date']: play_date
-                }
-
-                self.insert(database, deck_row)
+                if self.deck_id_exists():
+                    self.update_play_date(database, id, build_db_deck)
+                else:
+                    self.insert(database, build_db_deck)
             
             transaction.commit()
 
+    def deck_id_exists(self, database: Database, deck_id):
+        exists = database.connection.execute(
+            sql.select().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
+        ).fetchone() 
 
-       
-    def delete_deck_id_duplicate(self, database, deck_id):
+        return exists != None
+
+    def update_play_date(self, database: Database, deck_id: str, updated_deck_row: dict):
+        database.connection.execute(
+            self.decks_table.update().
+            where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
+            values({self.column_names['play_date']: updated_deck_row[self.column_names['play_date']]})
+        )
+    
+    # unused
+    def delete_deck_id_duplicate(self, database: Database, deck_id):
         database.connection.execute(
             self.decks_table.delete().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
         )
 
-    def insert(self, database, values: dict):
+    def insert(self, database: Database, deck_row: dict):
         database.connection.execute(
-            self.decks_table.insert().values(values)
+            self.decks_table.insert().values(deck_row)
         )
