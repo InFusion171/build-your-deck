@@ -65,12 +65,18 @@ class DeckDatabase(Database):
         transaction.commit()
 
     def update_won_lost_match_counter(self, database: Database, deck_id: str, updated_deck_row: dict):
+        column_won_count = self.column_names['won_count']
+        column_lost_count = self.column_names['lost_count']
+
         database.connection.execute(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
             values({
-                self.column_names['won_count']: self.decks_table.c[self.column_names['won_count']], #+ updated_deck_row['won_count'],
-                self.column_names['lost_count']: self.decks_table.c[self.column_names['lost_count']] #+ updated_deck_row['lost_count']
+                column_won_count: self.decks_table.c[column_won_count] + 
+                    updated_deck_row[column_won_count],
+
+                column_lost_count: self.decks_table.c[column_lost_count] + 
+                    updated_deck_row[column_lost_count]
             })
         )
 

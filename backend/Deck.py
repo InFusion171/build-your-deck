@@ -47,8 +47,6 @@ class Deck:
                     database.column_names['won_count']: self.won_count,
                     database.column_names['lost_count']: self.lost_count
                 }
-        
-        print(deck_row)
 
         return deck_row
 
