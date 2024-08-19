@@ -1,10 +1,9 @@
-import json
+from datetime import datetime
+import pytz
 import os
-from sortedcontainers import SortedDict
 
 from LocationApi import LocationApi
 from PlayerApi import PlayerApi
-from DeckDatabase import DeckDatabase
 from DeckApi import DeckApi
 
 class ClashRoyaleApi:
@@ -37,7 +36,11 @@ class ClashRoyaleApi:
                               self.location_list
                               )
         
-        top_players = playerApi.get_top_players(100)
+        top_players = playerApi.get_top_players(1)
+
+        europe_timezone = pytz.timezone('Europe/Berlin')
+        current_time = datetime.now(europe_timezone)
+        print("All top player recieved at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
         deckApi = DeckApi(top_players, 
                           self.clash_royal_api_url + self.player_battlelog_endpoint,
@@ -45,7 +48,8 @@ class ClashRoyaleApi:
                           self.deck_db_path,
                           self.deck_table_name)
 
-        #deckApi.write_decks_to_db()
+        deckApi.write_decks_to_db()
+        print("All top player wrote to db at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
 
 

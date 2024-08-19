@@ -16,48 +16,72 @@ class DeckApi:
         self.deck_table_name = deck_table_name
 
 
-    def _get_winning_deck(self, game):
+    def _get_game_decks(self, game):
         player_crowns = game['team'][0]['crowns']
         enemy_crowns = game['opponent'][0]['crowns']
 
-        cards = []
+        team_cards = []
+        opponent_cards = []
 
-        for card in game['team' if player_crowns > enemy_crowns else 'opponent'][0]['cards']:
+        for card in game['team'][0]['cards']:
             if 'maxEvolutionLevel' in card:
-                cards.insert(0, int(card['id']))
+                team_cards.insert(0, int(card['id']))
             else:
-                cards.append(int(card['id']))
+                team_cards.append(int(card['id']))
 
-        if len(cards) != 8:
-            print('We need to have 8 cards')
-            return None
+        for card in game['opponent'][0]['cards']:
+            if 'maxEvolutionLevel' in card:
+                opponent_cards.insert(0, int(card['id']))
+            else:
+                opponent_cards.append(int(card['id']))
 
+    
+        play_date = game['battleTime']
 
-        # get play year date and month
-        play_date = game['battleTime'].split('T')[0]
+        team_deck = Deck(*team_cards, game['team'][0]['supportCards'][0]['id'], play_date)
+        opponent_deck = Deck(*opponent_cards, game['opponent'][0]['supportCards'][0]['id'], play_date)
 
-        return Deck(*cards, play_date)
+        if player_crowns > enemy_crowns:
+            team_deck.won_count = 1
+            opponent_deck.lost_count = 1
+        else:
+            opponent_deck.won_count = 1
+            team_deck.lost_count = 1
 
-    def get_winning_decks(self, player_tag: str):
+        return team_deck, opponent_deck
+        
+
+    def get_decks_from_player_battelog(self, player_tag: str):
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
                                        self.api_header)
 
         if battlelog is None:
             print('cant get the battle log')
-            return dict()
+            return None
         
-        player_winning_decks = dict()
+        decks = []
 
         for game in battlelog:
             if not ('pathOfLegend' in game['type']):
                 continue
 
-            deck = self._get_winning_deck(game)
-            player_winning_decks[deck.get_id()] = deck
+            decks.extend([*self._get_game_decks(game)])
 
-        return player_winning_decks
+
+        bundled_decks = dict()
+
+        for deck in decks:
+            id = deck.get_id()
+
+            if id in bundled_decks:
+                bundled_decks[id].won_count = bundled_decks.get(id).won_count + deck.won_count
+                bundled_decks[id].lost_count = bundled_decks.get(id).lost_count + deck.lost_count
+            else:
+                bundled_decks[id] = deck
+
+        return bundled_decks
     
     def write_decks_to_db(self):
         with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
             for player_tag in self.top_players.keys():
-                database.add_decks(database, self.get_winning_decks(player_tag))
+                database.add_decks(database, self.get_decks_from_player_battelog(player_tag))

@@ -17,7 +17,10 @@ class DeckDatabase(Database):
             'card_6': 'CARD_6',
             'card_7': 'CARD_7',
             'card_8': 'CARD_8',
-            'play_date': 'PLAY_DATE'
+            'tower_troop': 'TOWER_TROOP',
+            'play_date': 'PLAY_DATE',
+            'won_count': 'WON_COUNT',
+            'lost_count': 'LOST_COUNT'
         }
 
         self.create_table_if_not_exist()
@@ -27,7 +30,7 @@ class DeckDatabase(Database):
         self.metadata = sql.MetaData()
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
-                                    sql.Column(self.column_names['deck_id'], sql.CHAR(10), primary_key=True),
+                                    sql.Column(self.column_names['deck_id'], sql.CHAR(12), primary_key=True),
                                     sql.Column(self.column_names['card_1_evo'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_2_evo'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_3'], sql.Integer(), nullable=False),
@@ -36,27 +39,45 @@ class DeckDatabase(Database):
                                     sql.Column(self.column_names['card_6'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_7'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_8'], sql.Integer(), nullable=False),
-                                    sql.Column(self.column_names['play_date'], sql.CHAR(8), nullable=False)
+                                    sql.Column(self.column_names['tower_troop'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['play_date'], sql.TEXT(), nullable=False),
+                                    sql.Column(self.column_names['won_count'], sql.INTEGER(), nullable=False),
+                                    sql.Column(self.column_names['lost_count'], sql.INTEGER(), nullable=False),
                                     )
         
         self.metadata.create_all(self.engine)
         
     def add_decks(self, database: Database, decks: dict[int, Deck]):
+        if decks is None:
+            return
+
         transaction = database.connection.begin()
 
         for id, deck in decks.items():
-            build_db_deck = deck.build_deck_for_db()
+            build_db_deck = deck.build_deck_for_db(database)
 
-            if self.deck_id_exists():
+            if self.deck_id_exists(database, id):
                 self.update_play_date(database, id, build_db_deck)
+                self.update_won_lost_match_counter(database, id, build_db_deck)
             else:
                 self.insert(database, build_db_deck)
         
         transaction.commit()
 
+    def update_won_lost_match_counter(self, database: Database, deck_id: str, updated_deck_row: dict):
+        database.connection.execute(
+            self.decks_table.update().
+            where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
+            values({
+                self.column_names['won_count']: self.decks_table.c[self.column_names['won_count']], #+ updated_deck_row['won_count'],
+                self.column_names['lost_count']: self.decks_table.c[self.column_names['lost_count']] #+ updated_deck_row['lost_count']
+            })
+        )
+
     def deck_id_exists(self, database: Database, deck_id):
         exists = database.connection.execute(
-            sql.select().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
+            sql.select(self.decks_table.c[self.column_names['deck_id']]).
+                where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
         ).fetchone() 
 
         return exists != None
@@ -65,7 +86,9 @@ class DeckDatabase(Database):
         database.connection.execute(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
-            values({self.column_names['play_date']: updated_deck_row[self.column_names['play_date']]})
+            values({
+                self.column_names['play_date']: updated_deck_row[self.column_names['play_date']]
+                })
         )
     
     # unused

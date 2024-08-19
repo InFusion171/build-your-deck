@@ -10,6 +10,7 @@ class PlayerApi:
     def get_top_players(self, player_limit: int) -> dict:
         top_player = dict()
 
+        
         for locationId in self.location_list.keys():
             top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
                                                         f'?limit={player_limit}',
@@ -20,6 +21,10 @@ class PlayerApi:
 
             for player in top_players_response['items']:
                 top_player[player['tag']] = player['eloRating']
+
+
+        #top_player['#8lpg880jr'] = 123
+
 
         return top_player
     
