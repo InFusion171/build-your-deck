@@ -11,6 +11,8 @@ class DeckDatabase(Database):
             'deck_id': 'DECK_ID',
             'card_1_evo': 'CARD_1_EVO',
             'card_2_evo': 'CARD_2_EVO',
+            'card_1': 'CARD_1',
+            'card_2': 'CARD_2',
             'card_3': 'CARD_3',
             'card_4': 'CARD_4',
             'card_5': 'CARD_5',
@@ -23,16 +25,18 @@ class DeckDatabase(Database):
             'lost_count': 'LOST_COUNT'
         }
 
-        self.create_table_if_not_exist()
+        self.create_table()
 
         
-    def create_table_if_not_exist(self):
+    def create_table(self):
         self.metadata = sql.MetaData()
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
                                     sql.Column(self.column_names['deck_id'], sql.CHAR(12), primary_key=True),
-                                    sql.Column(self.column_names['card_1_evo'], sql.Integer(), nullable=False),
-                                    sql.Column(self.column_names['card_2_evo'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_1_evo'], sql.Integer(), nullable=True),
+                                    sql.Column(self.column_names['card_2_evo'], sql.Integer(), nullable=True),
+                                    sql.Column(self.column_names['card_1'], sql.Integer(), nullable=True),
+                                    sql.Column(self.column_names['card_2'], sql.Integer(), nullable=True),
                                     sql.Column(self.column_names['card_3'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_4'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_5'], sql.Integer(), nullable=False),
@@ -54,7 +58,10 @@ class DeckDatabase(Database):
         transaction = database.connection.begin()
 
         for id, deck in decks.items():
-            build_db_deck = deck.build_deck_for_db(database)
+            build_db_deck = deck.build_deck_for_db(self.column_names)
+
+            if build_db_deck is None:
+                continue
 
             if self.deck_id_exists(database, id):
                 self.update_play_date(database, id, build_db_deck)

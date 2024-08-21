@@ -21,17 +21,20 @@ class DeckApi:
         enemy_crowns = game['opponent'][0]['crowns']
 
         team_cards = []
+        team_evo_cards = []
+
         opponent_cards = []
+        opponent_evo_cards = []
 
         for card in game['team'][0]['cards']:
-            if 'maxEvolutionLevel' in card:
-                team_cards.insert(0, int(card['id']))
+            if 'evolutionLevel' in card:
+                team_evo_cards.append(int(card['id']))
             else:
                 team_cards.append(int(card['id']))
 
         for card in game['opponent'][0]['cards']:
-            if 'maxEvolutionLevel' in card:
-                opponent_cards.insert(0, int(card['id']))
+            if 'evolutionLevel' in card:
+                opponent_evo_cards.append(int(card['id']))
             else:
                 opponent_cards.append(int(card['id']))
 
@@ -39,11 +42,14 @@ class DeckApi:
         play_date = game['battleTime']
 
         try:
-            team_deck = Deck(*team_cards, game['team'][0]['supportCards'][0]['id'], play_date)
-            opponent_deck = Deck(*opponent_cards, game['opponent'][0]['supportCards'][0]['id'], play_date)
+            team_tower_troop = game['team'][0]['supportCards'][0]['id']
+            opponent_tower_troop = game['opponent'][0]['supportCards'][0]['id']
         except:
             print(f'error! Game:\n{game}')
             return None
+       
+        team_deck = Deck(team_evo_cards, team_cards, team_tower_troop, play_date)
+        opponent_deck = Deck(opponent_evo_cards, opponent_cards, opponent_tower_troop, play_date)
 
         if player_crowns > enemy_crowns:
             team_deck.won_count = 1
@@ -63,7 +69,7 @@ class DeckApi:
             print('cant get the battle log')
             return None
         
-        decks = []
+        decks: list[Deck] = []
 
         for game in battlelog:
             if not ('pathOfLegend' in game['type']):
@@ -77,7 +83,7 @@ class DeckApi:
             decks.extend([*deck])
 
 
-        bundled_decks = dict()
+        bundled_decks: dict[str, Deck] = dict()
 
         for deck in decks:
             id = deck.get_id()
