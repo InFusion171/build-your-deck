@@ -38,8 +38,12 @@ class DeckApi:
     
         play_date = game['battleTime']
 
-        team_deck = Deck(*team_cards, game['team'][0]['supportCards'][0]['id'], play_date)
-        opponent_deck = Deck(*opponent_cards, game['opponent'][0]['supportCards'][0]['id'], play_date)
+        try:
+            team_deck = Deck(*team_cards, game['team'][0]['supportCards'][0]['id'], play_date)
+            opponent_deck = Deck(*opponent_cards, game['opponent'][0]['supportCards'][0]['id'], play_date)
+        except:
+            print(f'error! Game:\n{game}')
+            return None
 
         if player_crowns > enemy_crowns:
             team_deck.won_count = 1
@@ -65,7 +69,12 @@ class DeckApi:
             if not ('pathOfLegend' in game['type']):
                 continue
 
-            decks.extend([*self._get_game_decks(game)])
+            deck = self._get_game_decks(game)
+
+            if deck is None:
+                continue
+
+            decks.extend([*deck])
 
 
         bundled_decks = dict()

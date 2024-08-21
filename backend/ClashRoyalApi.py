@@ -36,7 +36,7 @@ class ClashRoyaleApi:
                               self.location_list
                               )
         
-        top_players = playerApi.get_top_players(1)
+        top_players = playerApi.get_top_players(100)
 
         europe_timezone = pytz.timezone('Europe/Berlin')
         current_time = datetime.now(europe_timezone)
@@ -49,6 +49,7 @@ class ClashRoyaleApi:
                           self.deck_table_name)
 
         deckApi.write_decks_to_db()
+
         print("All top player wrote to db at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
 
