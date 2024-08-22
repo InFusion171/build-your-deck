@@ -21,14 +21,14 @@ class LocationApi:
             if len(self.locations) != 0:
                 return self.locations
             
-            self.locations = self.__get_location_list_from_api()
+            self.locations = self._get_location_list_from_api()
 
             database.set_locations(self.locations)
 
             return self.locations
 
 
-    def __get_location_list_from_api(self) -> dict[str, str]:
+    def _get_location_list_from_api(self) -> dict[str, str]:
         locationListResponse = ApiRequest.request(self.location_list_url, self.api_header)
 
         locations = dict()

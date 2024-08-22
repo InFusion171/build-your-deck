@@ -3,13 +3,13 @@ import pandas as pd
 
 import sqlalchemy as sql
 
-class LocationDatabase(Database):
+class CardDatabase(Database):
     def __init__(self, database_path: str, table_name: str):
         super().__init__(database_path, table_name)
 
-        self.create_table()
+        self.create_table_if_not_exist()
 
-    def create_table(self):
+    def create_table_if_not_exist(self):
         self.metadata = sql.MetaData()
 
         self.location_table = sql.Table(self.table_name, self.metadata,
