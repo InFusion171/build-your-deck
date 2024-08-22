@@ -1,5 +1,5 @@
 from ApiRequest import ApiRequest
-from backend.Location.LocationDatabase import LocationDatabase
+from .LocationDatabase import LocationDatabase
 
 
 class LocationApi:

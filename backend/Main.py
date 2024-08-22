@@ -13,7 +13,7 @@ def main():
 
     print("Started at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
-    clashApi = ClashRoyaleApi('DB/Location.sqlite', 'DB/Deck.sqlite')
+    clashApi = ClashRoyaleApi('DB/Location.sqlite', 'DB/Deck.sqlite', 'DB/Card.sqlite')
 
     clashApi.run_api()
 

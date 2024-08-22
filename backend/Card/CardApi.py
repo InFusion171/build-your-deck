@@ -1,23 +1,24 @@
 from ApiRequest import ApiRequest
 
-from CardDatabase import CardDatabase
+from .CardDatabase import CardDatabase
 
 class CardApi:
-    def __init__(self, card_db_path: str, card_table_name: str, db_column_names: dict[str, str], 
+    def __init__(self, card_db_path: str, card_table_name: str, 
                  cards_url: str, api_header: str) -> None:
         self.cards_url = cards_url
         self.api_header = api_header
         self.card_db_path = card_db_path
         self.card_table_name = card_table_name
-        self.db_column_names = db_column_names
 
         self.cards = list(dict())
 
-    def create_and_get_cards(self, overwrite_db_entries = False):
+    def create_and_get_cards(self, overwrite_db_entries = False) -> list[dict]:
         if len(self.cards) != 0 and not overwrite_db_entries:
             return self.cards
 
         with CardDatabase(self.card_db_path, self.card_table_name) as database:
+            self.db_column_names = database.column_names
+
             if overwrite_db_entries:
                 self.cards = self._get_cards_from_api()
                 database.set_cards(self.cards)
@@ -36,7 +37,7 @@ class CardApi:
             return self.cards
 
         
-    def _get_cards_from_api(self):
+    def _get_cards_from_api(self) -> list[dict]:
         cards_response = ApiRequest.request(self.cards_url, self.api_header)
 
         if cards_response is None:
@@ -48,12 +49,12 @@ class CardApi:
         for card_item in cards_response['items']:
             card = dict()
 
-            card[self.db_column_names['deck_id']] = card_item['id']
-            card[self.db_column_names['deck_name']] = card_item['name']
+            card[self.db_column_names['card_id']] = card_item['id']
+            card[self.db_column_names['card_name']] = card_item['name']
             card[self.db_column_names['card_max_level']] = card_item['maxLevel']
 
             if 'maxEvolutionLevel' in card_item:
-                card[self.db_column_names['card_max_evolution_level']] = card_item['maxEvolutionLevel']
+                card[self.db_column_names['card_max_evolution_level']] = int(card_item['maxEvolutionLevel'])
 
                 evolution_icon_url: str = card_item['iconUrls']['evolutionMedium']
 

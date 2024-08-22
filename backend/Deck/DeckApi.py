@@ -1,6 +1,6 @@
-from backend.Deck.Deck import Deck
+from Deck import Deck
 from ApiRequest import ApiRequest
-from backend.Deck.DeckDatabase import DeckDatabase
+from .DeckDatabase import DeckDatabase
 
 import urllib.parse
 
