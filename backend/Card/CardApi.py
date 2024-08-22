@@ -3,32 +3,68 @@ from ApiRequest import ApiRequest
 from CardDatabase import CardDatabase
 
 class CardApi:
-    def __init__(self, card_db_path: str, card_table_name: str, cards_url: str, api_header: str) -> None:
+    def __init__(self, card_db_path: str, card_table_name: str, db_column_names: dict[str, str], 
+                 cards_url: str, api_header: str) -> None:
         self.cards_url = cards_url
         self.api_header = api_header
         self.card_db_path = card_db_path
         self.card_table_name = card_table_name
+        self.db_column_names = db_column_names
 
-        self.cards = dict()
+        self.cards = list(dict())
 
     def create_and_get_cards(self, overwrite_db_entries = False):
         if len(self.cards) != 0 and not overwrite_db_entries:
             return self.cards
 
         with CardDatabase(self.card_db_path, self.card_table_name) as database:
-            self.locations = database.get_locations()
+            if overwrite_db_entries:
+                self.cards = self._get_cards_from_api()
+                database.set_cards(self.cards)
 
-            if len(self.locations) != 0:
-                return self.locations
+                return self.cards
             
-            self.locations = self._get_location_list_from_api()
+            self.cards = database.get_cards()
 
-            database.set_locations(self.locations)
+            if len(self.cards) != 0:
+                return self.cards
 
-            return self.locations
+            self.cards = self._get_cards_from_api()
 
-        self.cards = ApiRequest.request(self.cards_url, self.api_header)
+            database.set_cards(self.cards)
 
-        if cards is None:
-            return None
+            return self.cards
+
         
+    def _get_cards_from_api(self):
+        cards_response = ApiRequest.request(self.cards_url, self.api_header)
+
+        if cards_response is None:
+            print('cant get cards from api')
+            return None
+
+        cards = []
+
+        for card_item in cards_response['items']:
+            card = dict()
+
+            card[self.db_column_names['deck_id']] = card_item['id']
+            card[self.db_column_names['deck_name']] = card_item['name']
+            card[self.db_column_names['card_max_level']] = card_item['maxLevel']
+
+            if 'maxEvolutionLevel' in card_item:
+                card[self.db_column_names['card_max_evolution_level']] = card_item['maxEvolutionLevel']
+
+                evolution_icon_url: str = card_item['iconUrls']['evolutionMedium']
+
+                card[self.db_column_names['card_icon_evolution']] = evolution_icon_url.split('/')[len(evolution_icon_url.split('/'))-1]
+
+            card_icon_url: str = card_item['iconUrls']['medium']
+
+            card[self.db_column_names['card_icon']] = card_icon_url.split('/')[len(card_icon_url.split('/'))-1]
+
+            cards.append(card)
+
+        return cards
+
+
