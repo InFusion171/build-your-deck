@@ -37,19 +37,22 @@ class ClashRoyaleApi:
                                   self.location_db_path,
                                   self.location_table_name)
 
-        #self.location_list = locationApi.create_and_get_locations()
+        self.location_list = locationApi.create_and_get_locations()
 
-        cardApi = CardApi(self.card_db_path, self.card_table_name, self.clash_royal_api_url + self.cards_list_endpoint, self.api_header)
-
-        print(cardApi.create_and_get_cards())
-
-        """playerApi = PlayerApi(self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
+        cardApi = CardApi(self.card_db_path, 
+                          self.card_table_name, 
+                          self.clash_royal_api_url + self.cards_list_endpoint,
+                          self.api_header)
+        
+        cardApi.create_and_get_cards()
+        """
+        playerApi = PlayerApi(self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
                               self.api_header,
                               self.location_list
                               )
+        
+        top_players = playerApi.get_top_players(100)
         """
-        #top_players = playerApi.get_top_players(100)
-
         europe_timezone = pytz.timezone('Europe/Berlin')
         current_time = datetime.now(europe_timezone)
         print("All top player recieved at:", current_time.strftime('%Y-%m-%d %H:%M'))

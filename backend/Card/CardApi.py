@@ -52,6 +52,7 @@ class CardApi:
             card[self.db_column_names['card_id']] = card_item['id']
             card[self.db_column_names['card_name']] = card_item['name']
             card[self.db_column_names['card_max_level']] = card_item['maxLevel']
+            card[self.db_column_names['card_rarity']] = card_item['rarity']
 
             if 'maxEvolutionLevel' in card_item:
                 card[self.db_column_names['card_max_evolution_level']] = int(card_item['maxEvolutionLevel'])

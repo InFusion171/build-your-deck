@@ -11,6 +11,7 @@ class CardDatabase(Database):
             'card_id': 'CARD_ID',
             'card_name': 'CARD_NAME',
             'card_max_level': 'CARD_MAX_LEVEL',
+            'card_rarity': 'CARD_RARITY',
             'card_max_evolution_level': 'CARD_MAX_EVOLUTION_LEVEL',
             'card_icon': 'CARD_ICON_ENDPOINT',
             'card_icon_evolution': 'CARD_ICON_EVOLUTION_ENDPOINT'
@@ -25,6 +26,7 @@ class CardDatabase(Database):
                                     sql.Column(self.column_names['card_id'], sql.Integer(), primary_key=True),
                                     sql.Column(self.column_names['card_name'], sql.String(), nullable=False),
                                     sql.Column(self.column_names['card_max_level'], sql.Integer(), nullable=False),
+                                    sql.Column(self.column_names['card_rarity'], sql.String(), nullable=False),
                                     sql.Column(self.column_names['card_max_evolution_level'], sql.Integer(), nullable=True),
                                     sql.Column(self.column_names['card_icon'], sql.String(), nullable=False),
                                     sql.Column(self.column_names['card_icon_evolution'], sql.String(), nullable=True),

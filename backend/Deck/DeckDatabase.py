@@ -44,7 +44,7 @@ class DeckDatabase(Database):
                                     sql.Column(self.column_names['card_7'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['card_8'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['tower_troop'], sql.Integer(), nullable=False),
-                                    sql.Column(self.column_names['play_date'], sql.TEXT(), nullable=False),
+                                    sql.Column(self.column_names['play_date'], sql.String(), nullable=False),
                                     sql.Column(self.column_names['won_count'], sql.INTEGER(), nullable=False),
                                     sql.Column(self.column_names['lost_count'], sql.INTEGER(), nullable=False),
                                     )
