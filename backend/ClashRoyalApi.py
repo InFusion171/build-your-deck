@@ -2,9 +2,9 @@ from datetime import datetime
 import pytz
 import os
 
-from LocationApi import LocationApi
+from backend.Location.LocationApi import LocationApi
 from PlayerApi import PlayerApi
-from DeckApi import DeckApi
+from backend.Deck.DeckApi import DeckApi
 
 class ClashRoyaleApi:
     def __init__(self, location_db_path: str, deck_db_path: str) -> None:

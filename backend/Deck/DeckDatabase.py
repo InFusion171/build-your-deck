@@ -1,5 +1,5 @@
 from Database import Database
-from Deck import Deck
+from backend.Deck.Deck import Deck
 
 import sqlalchemy as sql
 
