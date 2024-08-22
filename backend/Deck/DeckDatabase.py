@@ -2,6 +2,7 @@ from Database import Database
 from Deck import Deck
 
 import sqlalchemy as sql
+from sqlalchemy.sql import func, select, and_
 
 class DeckDatabase(Database):
     def __init__(self, database_path: str, table_name: str):
@@ -103,6 +104,46 @@ class DeckDatabase(Database):
                 self.column_names['play_date']: updated_deck_row[self.column_names['play_date']]
                 })
         )
+    
+    def find_best_deck(self, database: Database, card_levels: list[dict]):
+        # Building the card_levels CTE dynamically
+        card_levels_cte = sql.union_all(*[
+            sql.select([
+                sql.literal(card_id).label('card_id'),
+                sql.literal(level).label('level')
+            ])
+            for card_id, level in card_levels.items()
+        ]).cte('card_levels')
+
+        # Aliases for joined tables for each card in a deck
+        cl_aliases = [card_levels_cte.alias(f'cl{i}') for i in range(1, 9)]
+
+        # Building the query
+        query = (
+            sql.select([
+                self.decks_table.c[self.column_names['deck_id']],
+                sql.func.sum(
+                    sql.func.coalesce(cl.c.level, 0)
+                ).label('total_level')
+            ])
+            .select_from(self.decks_table)
+        )
+
+        # Adding joins
+        for i, cl in enumerate(cl_aliases, 1):
+            query = query.outerjoin(cl, cl.c.card_id == self.deck_table.c[self.column_names[f'card_{i}']])
+
+        # Finalizing the query
+        query = (
+            query
+            .group_by(self.deck_table.c[self.column_names['deck_id']])
+            .order_by(sql.desc('total_level'))
+            .limit(1)
+        )
+
+        # Execute the query
+        result = database.connection.execute(query).fetchone()
+        return result
     
     # unused
     def delete_deck_id_duplicate(self, database: Database, deck_id):

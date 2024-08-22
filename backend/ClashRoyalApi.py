@@ -14,6 +14,7 @@ class ClashRoyaleApi:
         self.api_header =  {'content-type': 'application/json', 'Authorization': 'Bearer {}'.format(os.getenv('API_TOKEN'))}
         self.ranking_list_path_of_legends_location_endpoint = '/locations/LOCATION_ID/pathoflegend/players'
         self.player_battlelog_endpoint = '/players/PLAYERTAG/battlelog'
+        self.player_information_endpoint = '/players/PLAYERTAG'
         self.locations_list_endpoint = '/locations'
         self.cards_list_endpoint = '/cards'
 
@@ -45,26 +46,30 @@ class ClashRoyaleApi:
                           self.api_header)
         
         cardApi.create_and_get_cards()
-        """
+        
         playerApi = PlayerApi(self.clash_royal_api_url + self.ranking_list_path_of_legends_location_endpoint,
+                              self.clash_royal_api_url + self.player_information_endpoint,
                               self.api_header,
                               self.location_list
                               )
         
-        top_players = playerApi.get_top_players(100)
-        """
+        #top_players = playerApi.get_top_players(100)
+        
+
         europe_timezone = pytz.timezone('Europe/Berlin')
         current_time = datetime.now(europe_timezone)
         print("All top player recieved at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
-        """deckApi = DeckApi(top_players, 
+        deckApi = DeckApi(None,#top_players, 
                           self.clash_royal_api_url + self.player_battlelog_endpoint,
                           self.api_header,
                           self.deck_db_path,
                           self.deck_table_name)
 
-        deckApi.write_decks_to_db()
-        """
+        print(deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR')))
+
+        #deckApi.write_decks_to_db()
+        
         print("All top player wrote to db at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
 

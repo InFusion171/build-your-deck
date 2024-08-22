@@ -100,3 +100,7 @@ class DeckApi:
         with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
             for player_tag in self.top_players.keys():
                 database.add_decks(database, self.get_decks_from_player_battelog(player_tag))
+
+    def get_decks(self, card_levels: list[dict]):
+        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
+            return database.find_best_deck(database, card_levels)
