@@ -132,12 +132,26 @@ class DeckDatabase(Database):
             
             return f'card_{card_pos}'
 
-
+        # junk code but i don't know a better solution :(
+        def get_level_dict(card_pos) -> dict:
+            if len(evo_cards_level_dict) == 0:
+                return cards_level_dict
+            
+            if len(evo_cards_level_dict) == 1:
+                if card_pos == 1:
+                    return evo_cards_level_dict
+                
+                return cards_level_dict
+                
+            if card_pos <= 2:
+                return evo_cards_level_dict
+            
+            return cards_level_dict
        
         level_sum_expression = sum(
             sql.case(
                 *[(self.decks_table.c[self.column_names[get_card_name(i)]] == card_id, level) 
-                for card_id, level in cards_level_dict.items()],
+                for card_id, level in get_level_dict(i).items()],
                 else_=0
             ) for i in range(1, 9)
         )
