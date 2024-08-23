@@ -11,7 +11,7 @@ class PlayerApi:
 
         self.location_list = location_list
     
-    def get_player_cards(self, player_tag: str):
+    def get_player_cards(self, player_tag: str) -> list[dict]:
         player_infos = ApiRequest.request(self.player_information_url.replace('PLAYERTAG', 
                                                                                urllib.parse.quote(player_tag)), 
                                                                                self.api_header)
@@ -35,9 +35,6 @@ class PlayerApi:
             cards.append(card)
 
         return cards
-
-            
-
 
     def get_top_players(self, player_limit: int) -> dict:
         top_player = dict()

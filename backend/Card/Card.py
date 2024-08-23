@@ -10,6 +10,6 @@ class Card:
             case 'epic':
                 return card_level + 5
             case 'legendary':
-                return card_level + 8 
+                return card_level + 8
             case 'champion':
                 return card_level + 10

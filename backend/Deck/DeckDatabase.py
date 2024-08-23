@@ -1,3 +1,4 @@
+from typing import Any, Dict, Literal
 from Database import Database
 from Deck import Deck
 
@@ -105,39 +106,59 @@ class DeckDatabase(Database):
                 })
         )
     
-    def find_highest_level_war_deck(self, database: Database, card_levels: list[dict]):
+    def find_highest_level_war_decks(self, database: Database, card_levels: list[dict]):
         pass
 
-
-    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1):
+    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 5):
         evo_cards = [evo for evo in card_levels if 'evolutionLevel' in evo]
         evo_cards_id = [card['id'] for card in evo_cards]
+        evo_cards_level_dict = {card['id']: card['level'] for card in evo_cards}
 
         cards_id = [card['id'] for card in card_levels]
-        
-        card_levels_dict = {card['id']: card['level'] for card in card_levels}
+        cards_level_dict = {card['id']: card['level'] for card in card_levels}
 
+        def get_card_name(card_pos: int):
+            if len(evo_cards_level_dict) == 0:
+                return f'card_{card_pos}'
+            
+            if len(evo_cards_level_dict) == 1:
+                if card_pos == 1:
+                    return f'card_{card_pos}_evo'
+                
+                return f'card_{card_pos}'
+                
+            if card_pos <= 2:
+                return f'card_{card_pos}_evo'
+            
+            return f'card_{card_pos}'
+
+
+       
         level_sum_expression = sum(
             sql.case(
-                *[(self.decks_table.c[self.column_names[f'card_{i}']] == card_id, card_levels_dict[card_id]) 
-                for card_id in cards_id],
+                *[(self.decks_table.c[self.column_names[get_card_name(i)]] == card_id, level) 
+                for card_id, level in cards_level_dict.items()],
                 else_=0
             ) for i in range(1, 9)
         )
+        
 
         subquery = (
-            sql.select(self.decks_table) 
+            sql.select(
+                self.decks_table,
+                level_sum_expression.label('total_level'),
+            )
             .filter(
                 sql.and_(
                     self.decks_table.c[self.column_names['card_1_evo']].in_(evo_cards_id),
                     self.decks_table.c[self.column_names['card_2_evo']].in_(evo_cards_id),
-                    *[self.decks_table.c[self.column_names[f'card_{x}']].in_(cards_id)
-                    for x in range(3, 9)]
+                    *[self.decks_table.c[self.column_names[f'card_{x}']].in_(cards_id) for x in range(3, 9)]
                 )
             )
-            .order_by(sql.desc(level_sum_expression))
-            .subquery()  
+            .order_by(desc(level_sum_expression))  
+            .subquery()
         )
+
 
         win_probability_expr = func.coalesce(
             subquery.c[self.column_names['won_count']] / 
@@ -146,12 +167,17 @@ class DeckDatabase(Database):
         )
 
         query = (
-            sql.select(subquery)
+            sql.select(
+                *[subquery.c[col] for col in subquery.c.keys() ]#if col != 'total_level']  
+            )
             .filter(
                 (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 50)
             )
-            .order_by(sql.desc(win_probability_expr))
-            .limit(deck_return_count) 
+            .order_by(
+                desc(subquery.c['total_level']),  
+                desc(win_probability_expr)        
+            )
+            .limit(deck_return_count)  
         )
 
         result = database.connection.execute(query)
