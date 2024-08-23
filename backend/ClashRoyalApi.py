@@ -66,7 +66,7 @@ class ClashRoyaleApi:
                           self.deck_db_path,
                           self.deck_table_name)
 
-        print(deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR')))
+        deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR'))
 
         #deckApi.write_decks_to_db()
         

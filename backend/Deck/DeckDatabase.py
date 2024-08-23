@@ -107,9 +107,51 @@ class DeckDatabase(Database):
         )
     
     def find_highest_level_war_decks(self, database: Database, card_levels: list[dict]):
-        pass
+        decks = []
 
-    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 5):
+        def find_card(id: int):
+            for card in card_levels:
+                if card['id'] == id:
+                    return card
+            
+            return None
+
+        card_copy = card_levels.copy()
+
+        for _ in range(0,4):
+            deck = self.find_highest_level_deck(database, card_copy)
+
+            decks.append(deck)
+
+            print(deck)
+
+            card_copy.remove(find_card(deck[0]['CARD_1_EVO']))
+            card_copy.remove(find_card(deck[0]['CARD_2_EVO']))
+            card_copy.remove(find_card(deck[0]['CARD_3']))
+            card_copy.remove(find_card(deck[0]['CARD_4']))
+            card_copy.remove(find_card(deck[0]['CARD_5']))
+            card_copy.remove(find_card(deck[0]['CARD_6']))
+            card_copy.remove(find_card(deck[0]['CARD_7']))
+            card_copy.remove(find_card(deck[0]['CARD_8']))
+
+        def get_card_name(id: int):
+            for card in card_levels:
+                if card['id'] == id:
+                    return card['name']
+
+        for deck in decks:
+            print(f'''
+                {get_card_name(deck['CARD_1_EVO'])}, 
+                {get_card_name(deck['CARD_2_EVO'])}, 
+                {get_card_name(deck['CARD_3'])}, 
+                {get_card_name(deck['CARD_4'])}, 
+                {get_card_name(deck['CARD_5'])}, 
+                {get_card_name(deck['CARD_6'])}, 
+                {get_card_name(deck['CARD_7'])},
+                {get_card_name(deck['CARD_8'])}'''.replace('\n', ''))
+
+
+    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1):
         evo_cards = [evo for evo in card_levels if 'evolutionLevel' in evo]
         evo_cards_id = [card['id'] for card in evo_cards]
         evo_cards_level_dict = {card['id']: card['level'] for card in evo_cards}
@@ -182,10 +224,10 @@ class DeckDatabase(Database):
 
         query = (
             sql.select(
-                *[subquery.c[col] for col in subquery.c.keys() ]#if col != 'total_level']  
+                *[subquery.c[col] for col in subquery.c.keys() if col != 'total_level']  
             )
             .filter(
-                (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 50)
+                (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 10)
             )
             .order_by(
                 desc(subquery.c['total_level']),  
@@ -196,7 +238,8 @@ class DeckDatabase(Database):
 
         result = database.connection.execute(query)
 
-        return result.fetchall()
+        return [row._asdict() for row in result.fetchall()]
+ 
         
     # unused
     def delete_deck_id_duplicate(self, database: Database, deck_id):
