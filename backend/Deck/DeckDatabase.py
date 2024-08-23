@@ -2,7 +2,7 @@ from Database import Database
 from Deck import Deck
 
 import sqlalchemy as sql
-from sqlalchemy.sql import func, select, and_
+from sqlalchemy import func, desc, select
 
 class DeckDatabase(Database):
     def __init__(self, database_path: str, table_name: str):
@@ -105,46 +105,59 @@ class DeckDatabase(Database):
                 })
         )
     
-    def find_best_deck(self, database: Database, card_levels: list[dict]):
-        # Building the card_levels CTE dynamically
-        card_levels_cte = sql.union_all(*[
-            sql.select([
-                sql.literal(card_id).label('card_id'),
-                sql.literal(level).label('level')
-            ])
-            for card_id, level in card_levels.items()
-        ]).cte('card_levels')
+    def find_highest_level_war_deck(self, database: Database, card_levels: list[dict]):
+        pass
 
-        # Aliases for joined tables for each card in a deck
-        cl_aliases = [card_levels_cte.alias(f'cl{i}') for i in range(1, 9)]
 
-        # Building the query
-        query = (
-            sql.select([
-                self.decks_table.c[self.column_names['deck_id']],
-                sql.func.sum(
-                    sql.func.coalesce(cl.c.level, 0)
-                ).label('total_level')
-            ])
-            .select_from(self.decks_table)
+    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1):
+        evo_cards = [evo for evo in card_levels if 'evolutionLevel' in evo]
+        evo_cards_id = [card['id'] for card in evo_cards]
+
+        cards_id = [card['id'] for card in card_levels]
+        
+        card_levels_dict = {card['id']: card['level'] for card in card_levels}
+
+        level_sum_expression = sum(
+            sql.case(
+                *[(self.decks_table.c[self.column_names[f'card_{i}']] == card_id, card_levels_dict[card_id]) 
+                for card_id in cards_id],
+                else_=0
+            ) for i in range(1, 9)
         )
 
-        # Adding joins
-        for i, cl in enumerate(cl_aliases, 1):
-            query = query.outerjoin(cl, cl.c.card_id == self.deck_table.c[self.column_names[f'card_{i}']])
-
-        # Finalizing the query
-        query = (
-            query
-            .group_by(self.deck_table.c[self.column_names['deck_id']])
-            .order_by(sql.desc('total_level'))
-            .limit(1)
+        subquery = (
+            sql.select(self.decks_table) 
+            .filter(
+                sql.and_(
+                    self.decks_table.c[self.column_names['card_1_evo']].in_(evo_cards_id),
+                    self.decks_table.c[self.column_names['card_2_evo']].in_(evo_cards_id),
+                    *[self.decks_table.c[self.column_names[f'card_{x}']].in_(cards_id)
+                    for x in range(3, 9)]
+                )
+            )
+            .order_by(sql.desc(level_sum_expression))
+            .subquery()  
         )
 
-        # Execute the query
-        result = database.connection.execute(query).fetchone()
-        return result
-    
+        win_probability_expr = func.coalesce(
+            subquery.c[self.column_names['won_count']] / 
+            (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']]), 
+            0
+        )
+
+        query = (
+            sql.select(subquery)
+            .filter(
+                (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 50)
+            )
+            .order_by(sql.desc(win_probability_expr))
+            .limit(deck_return_count) 
+        )
+
+        result = database.connection.execute(query)
+
+        return result.fetchall()
+        
     # unused
     def delete_deck_id_duplicate(self, database: Database, deck_id):
         database.connection.execute(

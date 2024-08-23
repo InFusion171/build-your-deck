@@ -103,4 +103,4 @@ class DeckApi:
 
     def get_decks(self, card_levels: list[dict]):
         with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
-            return database.find_best_deck(database, card_levels)
+            return database.find_highest_level_deck(database, card_levels)
