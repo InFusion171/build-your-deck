@@ -1,4 +1,4 @@
-from Deck import Deck
+from .Deck import Deck
 from ApiRequest import ApiRequest
 from .DeckDatabase import DeckDatabase
 
@@ -43,11 +43,15 @@ class DeckApi:
 
         try:
             team_tower_troop = game['team'][0]['supportCards'][0]['id']
+        except:
+            team_tower_troop = 159000000
+
+       
+        try:
             opponent_tower_troop = game['opponent'][0]['supportCards'][0]['id']
         except:
-            print(f'error! Game:\n{game}')
-            return None
-       
+            opponent_tower_troop = 159000000
+
         team_deck = Deck(team_evo_cards, team_cards, team_tower_troop, play_date)
         opponent_deck = Deck(opponent_evo_cards, opponent_cards, opponent_tower_troop, play_date)
 
