@@ -16,7 +16,7 @@ class CardApi:
         if len(self.cards) != 0 and not overwrite_db_entries:
             return self.cards
 
-        with CardDatabase(self.card_db_path, self.card_table_name) as database:
+        with CardDatabase() as database:
             self.db_column_names = database.column_names
 
             if overwrite_db_entries:
@@ -25,7 +25,7 @@ class CardApi:
 
                 return self.cards
             
-            self.cards = database.get_cards()
+            self.cards = database.get_all_cards()
 
             if len(self.cards) != 0:
                 return self.cards

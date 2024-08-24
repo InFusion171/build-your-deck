@@ -4,8 +4,20 @@ import pandas as pd
 import sqlalchemy as sql
 
 class CardDatabase(Database):
-    def __init__(self, database_path: str, table_name: str):
-        super().__init__(database_path, table_name)
+    database_path = ''
+    table_name = ''
+
+    @classmethod
+    def setup_database_connection(cls, database_path: str, table_name: str):
+        cls.database_path = database_path
+        cls.table_name = table_name
+
+    def __init__(self):
+        if len(self.database_path) == 0 or len(self.table_name) == 0:
+            print('You need to first call setup_database_connection') 
+            return None
+
+        super().__init__(self.database_path, self.table_name)
 
         self.column_names = {
             'card_id': 'CARD_ID',
@@ -34,11 +46,25 @@ class CardDatabase(Database):
         
         self.metadata.create_all(self.engine)
 
-    def get_cards(self) -> list[dict]:
-        with CardDatabase(self.database_path, self.table_name) as database:
+    def get_all_cards(self) -> list[dict]:
+        with CardDatabase() as database:
             results = database.exec_query(self.card_table.select())
 
         return [row._asdict() for row in results]
+
+    def get_deck_cards(self, evo_cards: list, cards: list):
+        with CardDatabase() as database:
+            evo_results = database.exec_query(sql.select(self.card_table). 
+                                          filter(
+                                              self.card_table.c[self.column_names['card_id']].in_(evo_cards)
+                                          ))
+            
+            card_results = database.exec_query(sql.select(self.card_table). 
+                                          filter(
+                                              self.card_table.c[self.column_names['card_id']].in_(cards)
+                                          ))
+
+            return str([row._asdict()['CARD_NAME'] for row in evo_results] + [row._asdict()['CARD_NAME'] for row in card_results])
 
     
     def set_cards(self, cards: list[dict]) -> None:

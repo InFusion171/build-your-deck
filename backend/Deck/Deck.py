@@ -1,5 +1,8 @@
 import hashlib
 
+from Card.CardDatabase import CardDatabase
+
+
 class Deck:
     def __init__(self, card_evos: list, cards: list, tower_troop_id: int, 
                  play_date: str) -> None:
@@ -18,10 +21,21 @@ class Deck:
         self.lost_count = 0
 
     def __str__(self) -> str:
-        return ','.join(map(str, self.card_evos + self.cards + [self.tower_troop_id]))
+        with CardDatabase() as database:
+            return database.get_deck_cards(self.card_evos, self.cards)
     
+    def delete_deck_cards_from_cards(self, all_cards: list[dict]) -> None:
+
+        for card in self.card_evos + self.cards:
+            for all_card in all_cards:
+                if card == all_card.get('id'):
+                    all_cards.remove(all_card)
+                    break
+
     def __hash__(self) -> str:
-        hasher = hashlib.shake_256(self.__str__().encode())
+        deck_string = ','.join(map(str, self.card_evos + self.cards + [self.tower_troop_id]))
+
+        hasher = hashlib.shake_256(deck_string.encode())
         
         return hasher.hexdigest(6)
     

@@ -1,5 +1,5 @@
 from Database import Database
-from Deck import Deck
+from Deck.Deck import Deck
 
 import sqlalchemy as sql
 from sqlalchemy import func, desc, select
@@ -105,52 +105,28 @@ class DeckDatabase(Database):
                 })
         )
     
-    def find_highest_level_war_decks(self, database: Database, card_levels: list[dict]):
+    def find_highest_level_war_decks(self, database: Database, cards: list[dict]):
         decks = []
 
-        def find_card(id: int):
-            for card in card_levels:
-                if card['id'] == id:
-                    return card
-            
-            return None
-
-        card_copy = card_levels.copy()
+        card_copy = cards.copy()
 
         for _ in range(0,4):
-            deck = self.find_highest_level_deck(database, card_copy)
+            deck_list = self.find_highest_level_deck(database, card_copy)
+            
+            if len(deck_list) == 0:
+                continue
 
-            decks.append(deck)
+            deck = deck_list[0]
+
+            deck.delete_deck_cards_from_cards(card_copy)
 
             print(deck)
 
-            card_copy.remove(find_card(deck[0]['CARD_1_EVO']))
-            card_copy.remove(find_card(deck[0]['CARD_2_EVO']))
-            card_copy.remove(find_card(deck[0]['CARD_3']))
-            card_copy.remove(find_card(deck[0]['CARD_4']))
-            card_copy.remove(find_card(deck[0]['CARD_5']))
-            card_copy.remove(find_card(deck[0]['CARD_6']))
-            card_copy.remove(find_card(deck[0]['CARD_7']))
-            card_copy.remove(find_card(deck[0]['CARD_8']))
-
-        def get_card_name(id: int):
-            for card in card_levels:
-                if card['id'] == id:
-                    return card['name']
-
-        for deck in decks:
-            print(f'''
-                {get_card_name(deck['CARD_1_EVO'])}, 
-                {get_card_name(deck['CARD_2_EVO'])}, 
-                {get_card_name(deck['CARD_3'])}, 
-                {get_card_name(deck['CARD_4'])}, 
-                {get_card_name(deck['CARD_5'])}, 
-                {get_card_name(deck['CARD_6'])}, 
-                {get_card_name(deck['CARD_7'])},
-                {get_card_name(deck['CARD_8'])}'''.replace('\n', ''))
+            decks.append(deck)
 
 
-    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1):
+
+    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1) -> list[Deck]:
         evo_cards = [evo for evo in card_levels if 'evolutionLevel' in evo]
         evo_cards_id = [card['id'] for card in evo_cards]
         evo_cards_level_dict = {card['id']: card['level'] for card in evo_cards}
@@ -237,7 +213,27 @@ class DeckDatabase(Database):
 
         result = database.connection.execute(query)
 
-        return [row._asdict() for row in result.fetchall()]
+        deck_rows = [row._asdict() for row in result.fetchall()]
+
+        decks = []
+
+        for deck in deck_rows:
+            evo_cards = []
+            cards = []
+
+            for colmn_name, card_id in deck.items():
+                if colmn_name == self.column_names['card_1_evo']:
+                    evo_cards.append(card_id)
+
+                elif colmn_name == self.column_names['card_2_evo']:
+                    evo_cards.append(card_id)
+
+                elif 'CARD_' in colmn_name and card_id != None:
+                    cards.append(card_id)
+
+            decks.append(Deck(evo_cards, cards, deck[self.column_names['tower_troop']], deck[self.column_names['play_date']]))
+
+        return decks
  
         
     # unused
