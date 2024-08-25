@@ -3,17 +3,15 @@ from ApiRequest import ApiRequest
 from .DeckDatabase import DeckDatabase
 
 import urllib.parse
+from datetime import datetime
 
 class DeckApi:
 
-    def __init__(self, top_players: dict, battlelog_url: str, api_header: str, deck_db_path: str, deck_table_name: str) -> None:
+    def __init__(self, top_players: dict, battlelog_url: str, api_header: str) -> None:
         self.top_players = top_players
         
         self.battlelog_url = battlelog_url
         self.api_header = api_header
-        
-        self.deck_db_path = deck_db_path
-        self.deck_table_name = deck_table_name
 
 
     def _get_game_decks(self, game):
@@ -58,9 +56,13 @@ class DeckApi:
         if player_crowns > enemy_crowns:
             team_deck.won_count = 1
             opponent_deck.lost_count = 1
+
+            team_deck.trophies = game['team'][0]['startingTrophies']
         else:
             opponent_deck.won_count = 1
             team_deck.lost_count = 1
+
+            opponent_deck.trophies = game['opponent'][0]['startingTrophies']
 
         return team_deck, opponent_deck
         
@@ -79,12 +81,27 @@ class DeckApi:
             if not ('pathOfLegend' in game['type']):
                 continue
 
-            deck = self._get_game_decks(game)
+            team_deck, opponent_deck = self._get_game_decks(game)
 
-            if deck is None:
+            if team_deck is None or opponent_deck is None:
                 continue
 
-            decks.extend([*deck])
+            with DeckDatabase() as database:
+                team_play_date = database.get_play_date(team_deck.get_id())
+
+                time1 = datetime.strptime(team_play_date, "%Y%m%dT%H%M%S.%fZ")
+                time2 = datetime.strptime(team_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+
+                if time1 < time2:
+                    decks.extend(team_deck)
+
+                opponent_play_date = database.get_play_date(opponent_deck.get_id())
+
+                time1 = datetime.strptime(opponent_play_date, "%Y%m%dT%H%M%S.%fZ")
+                time2 = datetime.strptime(opponent_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+
+                if time1 < time2:
+                    decks.extend(opponent_deck)
 
 
         bundled_decks: dict[str, Deck] = dict()
@@ -95,16 +112,24 @@ class DeckApi:
             if id in bundled_decks:
                 bundled_decks[id].won_count = bundled_decks.get(id).won_count + deck.won_count
                 bundled_decks[id].lost_count = bundled_decks.get(id).lost_count + deck.lost_count
+
+                bundled_decks[id].trophies = max(bundled_decks.get(id).trophies, deck.trophies)
+
+                play_date1 = datetime.strptime(bundled_decks[id].play_date, "%Y%m%dT%H%M%S.%fZ")
+                play_date2 = datetime.strptime(deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+
+                if play_date1 < play_date2:
+                    bundled_decks[id].play_date = deck.play_date
             else:
                 bundled_decks[id] = deck
 
         return bundled_decks
     
     def write_decks_to_db(self):
-        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
+        with DeckDatabase() as database:
             for player_tag in self.top_players.keys():
                 database.add_decks(database, self.get_decks_from_player_battelog(player_tag))
 
     def get_decks(self, cards: list[dict]):
-        with DeckDatabase(self.deck_db_path, self.deck_table_name) as database:
+        with DeckDatabase() as database:
             return database.find_highest_level_war_decks(database, cards)

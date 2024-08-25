@@ -5,8 +5,16 @@ import sqlalchemy as sql
 from sqlalchemy import func, desc, select
 
 class DeckDatabase(Database):
-    def __init__(self, database_path: str, table_name: str):
-        super().__init__(database_path, table_name)
+    database_path = ''
+    table_name = ''
+
+    @classmethod
+    def setup_database_connection(cls, database_path: str, table_name: str):
+        cls.database_path = database_path
+        cls.table_name = table_name
+
+    def __init__(self):
+        super().__init__(self.database_path, self.table_name)
 
         self.column_names = {
             'deck_id': 'DECK_ID',
@@ -22,6 +30,7 @@ class DeckDatabase(Database):
             'card_8': 'CARD_8',
             'tower_troop': 'TOWER_TROOP',
             'play_date': 'PLAY_DATE',
+            'trophies': 'TROPHIES',
             'won_count': 'WON_COUNT',
             'lost_count': 'LOST_COUNT'
         }
@@ -46,6 +55,7 @@ class DeckDatabase(Database):
                                     sql.Column(self.column_names['card_8'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['tower_troop'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['play_date'], sql.String(), nullable=False),
+                                    sql.Column(self.column_names['trophies'], sql.String(), nullable=False),
                                     sql.Column(self.column_names['won_count'], sql.INTEGER(), nullable=False),
                                     sql.Column(self.column_names['lost_count'], sql.INTEGER(), nullable=False),
                                     )
@@ -66,11 +76,20 @@ class DeckDatabase(Database):
 
             if self.deck_id_exists(database, id):
                 self.update_play_date(database, id, build_db_deck)
+                self.update_trophies(database, id, build_db_deck)
                 self.update_won_lost_match_counter(database, id, build_db_deck)
             else:
                 self.insert(database, build_db_deck)
         
         transaction.commit()
+
+    def get_play_date(self, database: Database, deck_id: str) -> str:
+        result = database.exec_query(
+            select(self.decks_table.c[self.column_names['play_date']]).
+            where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
+        )
+
+        return result[0][self.column_names['play_date']]
 
     def update_won_lost_match_counter(self, database: Database, deck_id: str, updated_deck_row: dict):
         column_won_count = self.column_names['won_count']
@@ -88,7 +107,7 @@ class DeckDatabase(Database):
             })
         )
 
-    def deck_id_exists(self, database: Database, deck_id):
+    def deck_id_exists(self, database: Database, deck_id: str):
         exists = database.connection.execute(
             sql.select(self.decks_table.c[self.column_names['deck_id']]).
                 where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
@@ -105,6 +124,15 @@ class DeckDatabase(Database):
                 })
         )
     
+    def update_trophies(self, database: Database, deck_id: str, updated_deck_row: dict):
+        database.connection.execute(
+            self.decks_table.update().
+            where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
+            values({
+                self.column_names['trophies']: updated_deck_row[self.column_names['trophies']]
+                })
+        )
+
     def find_highest_level_war_decks(self, database: Database, cards: list[dict]):
         decks = []
 

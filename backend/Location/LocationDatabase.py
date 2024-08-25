@@ -4,8 +4,16 @@ import pandas as pd
 import sqlalchemy as sql
 
 class LocationDatabase(Database):
-    def __init__(self, database_path: str, table_name: str):
-        super().__init__(database_path, table_name)
+    database_path = ''
+    table_name = ''
+
+    @classmethod
+    def setup_database_connection(cls, database_path: str, table_name: str):
+        cls.database_path = database_path
+        cls.table_name = table_name
+
+    def __init__(self):
+        super().__init__(self.database_path, self.table_name)
 
         self.create_table()
 

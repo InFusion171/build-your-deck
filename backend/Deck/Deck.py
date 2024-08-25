@@ -20,6 +20,8 @@ class Deck:
         self.won_count = 0
         self.lost_count = 0
 
+        self.trophies = 0
+
     def __str__(self) -> str:
         with CardDatabase() as database:
             return database.get_deck_cards(self.card_evos, self.cards)

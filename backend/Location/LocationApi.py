@@ -3,11 +3,9 @@ from .LocationDatabase import LocationDatabase
 
 
 class LocationApi:
-    def __init__(self, location_list_url: str, api_header: str, location_db_path: str, location_table_name: str):
+    def __init__(self, location_list_url: str, api_header: str):
         self.location_list_url = location_list_url
         self.api_header = api_header
-        self.location_db_path = location_db_path
-        self.location_table_name = location_table_name
 
         self.locations = dict()
 
@@ -15,7 +13,7 @@ class LocationApi:
         if len(self.locations) != 0:
             return self.locations
         
-        with LocationDatabase(self.location_db_path, self.location_table_name) as database:
+        with LocationDatabase() as database:
             self.locations = database.get_locations()
 
             if len(self.locations) != 0:
