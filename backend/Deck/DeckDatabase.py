@@ -63,7 +63,7 @@ class DeckDatabase(Database):
         self.metadata.create_all(self.engine)
         
     def add_decks(self, database: Database, decks: dict[int, Deck]):
-        if decks is None:
+        if decks is None or len(decks) == 0:
             return
 
         transaction = database.connection.begin()

@@ -28,7 +28,7 @@ class LocationDatabase(Database):
         self.metadata.create_all(self.engine)
 
     def get_locations(self) -> dict[int, str]:
-        with LocationDatabase(self.database_path, self.table_name) as database:
+        with LocationDatabase() as database:
             results = database.exec_query(self.location_table.select())
 
         rows = [row._asdict() for row in results]
@@ -36,7 +36,7 @@ class LocationDatabase(Database):
         return {row['LOCATION_ID'] : row['LOCATION_NAME'] for row in rows}
     
     def set_locations(self, locations: dict[int, str]) -> None:
-        with LocationDatabase(self.database_path, self.table_name) as database:
+        with LocationDatabase() as database:
             table = {'LOCATION_ID': [id for id in locations.keys()], 
                      'LOCATION_NAME': [name for name in locations.values()]}
 

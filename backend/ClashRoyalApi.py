@@ -40,20 +40,19 @@ class ClashRoyaleApi:
                               self.location_list
                               )
         
-        #top_players = playerApi.get_top_players(100)
+        top_players = playerApi.get_top_players(1)
         
-
         europe_timezone = pytz.timezone('Europe/Berlin')
         current_time = datetime.now(europe_timezone)
         print("All top player recieved at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
-        deckApi = DeckApi(None,#top_players, 
+        deckApi = DeckApi(top_players, 
                           self.clash_royal_api_url + self.player_battlelog_endpoint,
                           self.api_header)
 
-        deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR'))
+        #deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR'))
 
-        #deckApi.write_decks_to_db()
+        deckApi.write_decks_to_db()
         
 
 
