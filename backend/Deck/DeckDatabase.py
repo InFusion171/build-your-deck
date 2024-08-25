@@ -89,7 +89,7 @@ class DeckDatabase(Database):
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
         )
 
-        return result[0][self.column_names['play_date']]
+        return result[0]._asdict()[self.column_names['play_date']]
 
     def update_won_lost_match_counter(self, database: Database, deck_id: str, updated_deck_row: dict):
         column_won_count = self.column_names['won_count']
@@ -116,7 +116,7 @@ class DeckDatabase(Database):
         return exists != None
 
     def update_play_date(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.connection.execute(
+        database.exec_query(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
             values({
@@ -125,7 +125,7 @@ class DeckDatabase(Database):
         )
     
     def update_trophies(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.connection.execute(
+        database.exec_query(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
             values({
@@ -229,11 +229,12 @@ class DeckDatabase(Database):
             sql.select(
                 *[subquery.c[col] for col in subquery.c.keys() if col != 'total_level']  
             )
-            .filter(
-                (subquery.c[self.column_names['won_count']] )#+ subquery.c[self.column_names['lost_count']] > 50)
-            )
+            #.filter(
+             #   (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 30)
+            #)
             .order_by(
-                desc(subquery.c['total_level']),  
+                desc(subquery.c['total_level']), 
+                desc(self.column_names['trophies']), 
                 desc(win_probability_expr)        
             )
             .limit(deck_return_count)  

@@ -20,7 +20,7 @@ class Deck:
         self.won_count = 0
         self.lost_count = 0
 
-        self.trophies = 0
+        self.trophies = -1
 
     def __str__(self) -> str:
         with CardDatabase() as database:
@@ -52,10 +52,14 @@ class Deck:
             print('we need 8 total cards')
             return None
 
+        if self.trophies == -1:
+            return None
+
         base_row = {
                     column_names['deck_id']: self.get_id(),
                     column_names['tower_troop']: self.tower_troop_id,
                     column_names['play_date']: self.play_date,
+                    column_names['trophies']: self.trophies,
                     column_names['won_count']: self.won_count,
                     column_names['lost_count']: self.lost_count
                 }

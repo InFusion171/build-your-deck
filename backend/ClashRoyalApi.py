@@ -50,9 +50,9 @@ class ClashRoyaleApi:
                           self.clash_royal_api_url + self.player_battlelog_endpoint,
                           self.api_header)
 
-        #deckApi.get_decks( playerApi.get_player_cards('#8LPG880JR'))
+        print(deckApi.get_decks(playerApi.get_player_cards('#8LPG880JR')).__str__())
 
-        deckApi.write_decks_to_db()
+        #deckApi.write_decks_to_db()
         
 
 

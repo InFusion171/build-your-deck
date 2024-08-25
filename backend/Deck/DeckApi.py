@@ -57,12 +57,18 @@ class DeckApi:
             team_deck.won_count = 1
             opponent_deck.lost_count = 1
 
-            team_deck.trophies = game['team'][0]['startingTrophies']
+            try:
+                team_deck.trophies = game['team'][0]['startingTrophies']
+            except:
+                return None, None
         else:
             opponent_deck.won_count = 1
             team_deck.lost_count = 1
 
-            opponent_deck.trophies = game['opponent'][0]['startingTrophies']
+            try:
+                opponent_deck.trophies = game['opponent'][0]['startingTrophies']
+            except:
+                return None, None
 
         return team_deck, opponent_deck
         
@@ -87,21 +93,30 @@ class DeckApi:
                 continue
 
             with DeckDatabase() as database:
-                team_play_date = database.get_play_date(team_deck.get_id())
+                if database.deck_id_exists(database, team_deck.get_id()):
+                    team_play_date = database.get_play_date(database, team_deck.get_id())
 
-                time1 = datetime.strptime(team_play_date, "%Y%m%dT%H%M%S.%fZ")
-                time2 = datetime.strptime(team_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+                    time1 = datetime.strptime(team_play_date, "%Y%m%dT%H%M%S.%fZ")
+                    time2 = datetime.strptime(team_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
 
-                if time1 < time2:
-                    decks.extend(team_deck)
+                    if time1 < time2:
+                        decks.append(team_deck)
 
-                opponent_play_date = database.get_play_date(opponent_deck.get_id())
+                else:
+                    decks.append(team_deck)
 
-                time1 = datetime.strptime(opponent_play_date, "%Y%m%dT%H%M%S.%fZ")
-                time2 = datetime.strptime(opponent_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+                if database.deck_id_exists(database, opponent_deck.get_id()):
+                    opponent_play_date = database.get_play_date(database, opponent_deck.get_id())
 
-                if time1 < time2:
-                    decks.extend(opponent_deck)
+                    time1 = datetime.strptime(opponent_play_date, "%Y%m%dT%H%M%S.%fZ")
+                    time2 = datetime.strptime(opponent_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
+
+                    if time1 < time2:
+                        decks.append(opponent_deck)
+                else:
+                    decks.append(opponent_deck)
+
+
 
 
         bundled_decks: dict[str, Deck] = dict()
@@ -133,3 +148,4 @@ class DeckApi:
     def get_decks(self, cards: list[dict]):
         with DeckDatabase() as database:
             return database.find_highest_level_war_decks(database, cards)
+            #return database.find_highest_level_deck(database, cards)

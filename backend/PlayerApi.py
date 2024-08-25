@@ -43,7 +43,7 @@ class PlayerApi:
 
         for locationId in self.location_list.keys():
             if os.getenv('BUILD_YOUR_DECK_TEST') == 'TRUE':
-                if test_count_request == 10:
+                if test_count_request == 5:
                     break
                 test_count_request = test_count_request + 1
 
@@ -59,7 +59,7 @@ class PlayerApi:
             for player in top_players_response['items']:
                 top_player[player['tag']] = player['eloRating']
 
-        #top_player['#8lpg880jr'] = 123
+        #top_player['#8LPG880JR'] = 123
 
 
         return top_player
