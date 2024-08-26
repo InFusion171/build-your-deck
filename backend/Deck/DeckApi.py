@@ -2,6 +2,8 @@ from .Deck import Deck
 from ApiRequest import ApiRequest
 from .DeckDatabase import DeckDatabase
 
+from Database import Database
+
 import urllib.parse
 from datetime import datetime
 
@@ -74,6 +76,7 @@ class DeckApi:
         
 
     def get_decks_from_player_battelog(self, player_tag: str):
+
         battlelog = ApiRequest.request(self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
                                        self.api_header)
 
@@ -92,58 +95,25 @@ class DeckApi:
             if team_deck is None or opponent_deck is None:
                 continue
 
-            with DeckDatabase() as database:
-                if database.deck_id_exists(database, team_deck.get_id()):
-                    team_play_date = database.get_play_date(database, team_deck.get_id())
-
-                    time1 = datetime.strptime(team_play_date, "%Y%m%dT%H%M%S.%fZ")
-                    time2 = datetime.strptime(team_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
-
-                    if time1 < time2:
-                        decks.append(team_deck)
-
-                else:
-                    decks.append(team_deck)
-
-                if database.deck_id_exists(database, opponent_deck.get_id()):
-                    opponent_play_date = database.get_play_date(database, opponent_deck.get_id())
-
-                    time1 = datetime.strptime(opponent_play_date, "%Y%m%dT%H%M%S.%fZ")
-                    time2 = datetime.strptime(opponent_deck.play_date, "%Y%m%dT%H%M%S.%fZ")
-
-                    if time1 < time2:
-                        decks.append(opponent_deck)
-                else:
-                    decks.append(opponent_deck)
+            decks.append(team_deck)
+            decks.append(opponent_deck)
 
 
-
-
-        bundled_decks: dict[str, Deck] = dict()
-
-        for deck in decks:
-            id = deck.get_id()
-
-            if id in bundled_decks:
-                bundled_decks[id].won_count = bundled_decks.get(id).won_count + deck.won_count
-                bundled_decks[id].lost_count = bundled_decks.get(id).lost_count + deck.lost_count
-
-                bundled_decks[id].trophies = max(bundled_decks.get(id).trophies, deck.trophies)
-
-                play_date1 = datetime.strptime(bundled_decks[id].play_date, "%Y%m%dT%H%M%S.%fZ")
-                play_date2 = datetime.strptime(deck.play_date, "%Y%m%dT%H%M%S.%fZ")
-
-                if play_date1 < play_date2:
-                    bundled_decks[id].play_date = deck.play_date
-            else:
-                bundled_decks[id] = deck
-
-        return bundled_decks
+        return decks
     
     def write_decks_to_db(self):
+        all_decks: list[Deck] = []
+
+        for player_tag in self.top_players.keys():
+            decks_player = self.get_decks_from_player_battelog(player_tag)
+
+            if decks_player is None:
+                continue
+
+            all_decks.append(decks_player)
+
         with DeckDatabase() as database:
-            for player_tag in self.top_players.keys():
-                database.add_decks(database, self.get_decks_from_player_battelog(player_tag))
+            database.add_decks(database, all_decks)
 
     def get_decks(self, cards: list[dict]):
         with DeckDatabase() as database:

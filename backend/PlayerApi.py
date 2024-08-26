@@ -59,8 +59,5 @@ class PlayerApi:
             for player in top_players_response['items']:
                 top_player[player['tag']] = player['eloRating']
 
-        #top_player['#8LPG880JR'] = 123
-
-
         return top_player
     

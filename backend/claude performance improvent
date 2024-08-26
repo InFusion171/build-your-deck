@@ -1,0 +1,64 @@
+from sqlalchemy import select, case
+
+def add_decks_batch(self, database: Database, decks: dict[str, Deck]):
+    if not decks:
+        return
+
+    # Get all existing deck IDs in one query
+    existing_deck_ids = set(row[0] for row in database.connection.execute(
+        select(self.decks_table.c[self.column_names['deck_id']])
+        .where(self.decks_table.c[self.column_names['deck_id']].in_(decks.keys()))
+    ).fetchall())
+
+    new_decks = []
+    existing_decks = []
+
+    for deck_id, deck in decks.items():
+        build_db_deck = deck.build_deck_for_db(self.column_names)
+        if build_db_deck:
+            if deck_id in existing_deck_ids:
+                existing_decks.append(build_db_deck)
+            else:
+                new_decks.append(build_db_deck)
+
+    with database.connection.begin() as transaction:
+        # Batch insert for new decks
+        if new_decks:
+            database.connection.execute(
+                self.decks_table.insert().values(new_decks)
+            )
+
+        # Batch update for existing decks
+        if existing_decks:
+            update_stmt = self.decks_table.update()\
+                .where(self.decks_table.c[self.column_names['deck_id']] == case(
+                    {deck[self.column_names['deck_id']]: deck[self.column_names['deck_id']] for deck in existing_decks},
+                    value=self.decks_table.c[self.column_names['deck_id']]
+                ))
+
+            for column in self.column_names.values():
+                if column != self.column_names['deck_id']:
+                    update_stmt = update_stmt.values({column: case(
+                        {deck[self.column_names['deck_id']]: deck[column] for deck in existing_decks},
+                        else_=self.decks_table.c[column]
+                    )})
+
+            database.connection.execute(update_stmt)
+
+        # Update won/lost counts and trophies for existing decks
+        for deck in existing_decks:
+            deck_id = deck[self.column_names['deck_id']]
+            database.connection.execute(
+                self.decks_table.update()
+                .where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
+                .values({
+                    self.column_names['won_count']: 
+                        self.decks_table.c[self.column_names['won_count']] + deck[self.column_names['won_count']],
+                    self.column_names['lost_count']: 
+                        self.decks_table.c[self.column_names['lost_count']] + deck[self.column_names['lost_count']],
+                    self.column_names['trophies']: 
+                        func.greatest(self.decks_table.c[self.column_names['trophies']], deck[self.column_names['trophies']]),
+                    self.column_names['play_date']: 
+                        func.greatest(self.decks_table.c[self.column_names['play_date']], deck[self.column_names['play_date']])
+                })
+            )

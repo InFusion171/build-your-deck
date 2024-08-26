@@ -62,9 +62,16 @@ class DeckDatabase(Database):
         
         self.metadata.create_all(self.engine)
         
-    def add_decks(self, database: Database, decks: dict[int, Deck]):
+    def add_decks(self, database: Database, decks: list[dict[str, Deck]]):
         if decks is None or len(decks) == 0:
             return
+
+        existing_deck_ids_result = database.exec_query(
+            select(self.decks_table.c[self.column_names['deck_id']])
+            .where(self.decks_table.c[self.column_names['deck_id']].in_(set(id for decks_dict in decks for id in decks_dict.keys())))
+        )
+
+        existing_deck_ids = set(row[0] for row in existing_deck_ids_result)
 
         transaction = database.connection.begin()
 
@@ -116,7 +123,7 @@ class DeckDatabase(Database):
         return exists != None
 
     def update_play_date(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.exec_query(
+        database.connection.execute(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
             values({
@@ -125,7 +132,7 @@ class DeckDatabase(Database):
         )
     
     def update_trophies(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.exec_query(
+        database.connection.execute(
             self.decks_table.update().
             where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
             values({
