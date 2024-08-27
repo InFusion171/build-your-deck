@@ -1,3 +1,4 @@
+import asyncio
 from ApiRequest import ApiRequest
 
 from .CardDatabase import CardDatabase
@@ -35,7 +36,8 @@ class CardApi:
 
         
     def _get_cards_from_api(self) -> list[dict]:
-        cards_response = ApiRequest.request(self.cards_url, self.api_header)
+        loop = asyncio.get_event_loop()
+        cards_response = loop.run_until_complete(ApiRequest.request(self.cards_url, self.api_header))
 
         if cards_response is None:
             print('cant get cards from api')

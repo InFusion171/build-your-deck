@@ -55,40 +55,42 @@ class DeckDatabase(Database):
                                     sql.Column(self.column_names['card_8'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['tower_troop'], sql.Integer(), nullable=False),
                                     sql.Column(self.column_names['play_date'], sql.String(), nullable=False),
-                                    sql.Column(self.column_names['trophies'], sql.String(), nullable=False),
+                                    sql.Column(self.column_names['trophies'], sql.INTEGER(), nullable=False),
                                     sql.Column(self.column_names['won_count'], sql.INTEGER(), nullable=False),
                                     sql.Column(self.column_names['lost_count'], sql.INTEGER(), nullable=False),
                                     )
         
         self.metadata.create_all(self.engine)
         
-    def add_decks(self, database: Database, decks: list[dict[str, Deck]]):
-        if decks is None or len(decks) == 0:
+    def add_decks(self, database: Database, decks: list[Deck]):
+        if not decks:
             return
 
-        existing_deck_ids_result = database.exec_query(
-            select(self.decks_table.c[self.column_names['deck_id']])
-            .where(self.decks_table.c[self.column_names['deck_id']].in_(set(id for decks_dict in decks for id in decks_dict.keys())))
-        )
+        new_decks: list[dict] = []
+        existing_decks: list[dict] = []
 
-        existing_deck_ids = set(row[0] for row in existing_deck_ids_result)
+        existing_deck_ids = self.get_existing_deck_ids(database, set([deck.get_id() for deck in decks]))
 
-        transaction = database.connection.begin()
-
-        for id, deck in decks.items():
+        for deck in decks:
             build_db_deck = deck.build_deck_for_db(self.column_names)
 
             if build_db_deck is None:
                 continue
 
-            if self.deck_id_exists(database, id):
-                self.update_play_date(database, id, build_db_deck)
-                self.update_trophies(database, id, build_db_deck)
-                self.update_won_lost_match_counter(database, id, build_db_deck)
+            if build_db_deck[self.column_names['deck_id']] in existing_deck_ids:
+                existing_decks.append(build_db_deck)
             else:
-                self.insert(database, build_db_deck)
-        
-        transaction.commit()
+                new_decks.append(build_db_deck)
+
+    
+        if new_decks:
+            self.insert(database, new_decks)
+
+        if existing_decks:
+            self.update_values(database, existing_decks)
+
+
+
 
     def get_play_date(self, database: Database, deck_id: str) -> str:
         result = database.exec_query(
@@ -114,31 +116,81 @@ class DeckDatabase(Database):
             })
         )
 
-    def deck_id_exists(self, database: Database, deck_id: str):
-        exists = database.connection.execute(
-            sql.select(self.decks_table.c[self.column_names['deck_id']]).
-                where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
-        ).fetchone() 
-
-        return exists != None
-
-    def update_play_date(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.connection.execute(
-            self.decks_table.update().
-            where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
-            values({
-                self.column_names['play_date']: updated_deck_row[self.column_names['play_date']]
-                })
+    def get_existing_deck_ids(self, database: Database, deck_ids: set) -> set[str]:
+        existing_deck_ids_result = database.exec_query(
+            select(self.decks_table.c[self.column_names['deck_id']])
+            .where(self.decks_table.c[self.column_names['deck_id']].in_(deck_ids))
         )
+
+        return set(row[0] for row in existing_deck_ids_result)
+
+
+    def convert_date_for_sqlite(self, date_str):
+        return func.strftime('%Y%m%dT%H%M%S.%fZ', date_str)
     
-    def update_trophies(self, database: Database, deck_id: str, updated_deck_row: dict):
-        database.connection.execute(
-            self.decks_table.update().
-            where(self.decks_table.c[self.column_names['deck_id']] == deck_id).
-            values({
-                self.column_names['trophies']: updated_deck_row[self.column_names['trophies']]
+
+    def update_values(self, database: Database, decks_to_update: list[dict]):
+        deck_id_col = self.column_names['deck_id']
+        play_date_col = self.column_names['play_date']
+        
+        for deck in decks_to_update:
+            deck_id = deck[self.column_names['deck_id']]
+            won_count_col = self.column_names['won_count']
+            lost_count_col = self.column_names['lost_count']
+            trophies_col = self.column_names['trophies']
+
+            update_stmt = (
+                self.decks_table.update()
+                .where(
+                    (self.decks_table.c[deck_id_col] == deck_id) #&
+                    #(self.convert_date_for_sqlite(self.decks_table.c[play_date_col]) < self.convert_date_for_sqlite(deck[play_date_col]))
+                )
+                .values({
+                    won_count_col: self.decks_table.c[won_count_col] + deck[won_count_col],
+                    lost_count_col: self.decks_table.c[lost_count_col] + deck[lost_count_col],
+                    trophies_col: func.max(self.decks_table.c[trophies_col], deck[trophies_col]),
+                    play_date_col: deck[play_date_col]
                 })
+            )
+
+            database.connection.execute(update_stmt)
+
+        self._update_play_date_values(database, decks_to_update)
+
+    def _update_play_date_values(self, database: Database, decks_to_update: list[dict]):
+        deck_id_col = self.column_names['deck_id']
+        play_date_col = self.column_names['play_date']
+        
+        deck_id_case = sql.case(
+                {deck[deck_id_col]: deck[deck_id_col] for deck in decks_to_update},
+                value=self.decks_table.c[deck_id_col]
+            )
+        
+        play_date_case = sql.case(
+                {deck[deck_id_col]: self.convert_date_for_sqlite(deck[play_date_col]) for deck in decks_to_update},
+                value=self.convert_date_for_sqlite(self.decks_table.c[play_date_col])
+            )
+
+
+        update_stmt = self.decks_table.update().where(
+            (self.decks_table.c[deck_id_col] == deck_id_case) &
+            (self.convert_date_for_sqlite(self.decks_table.c[play_date_col]) < play_date_case)
         )
+
+        for column in self.column_names.values():
+            if column not in [deck_id_col, play_date_col]:
+                column_case = sql.case(
+                    {deck[deck_id_col]: deck[column] for deck in decks_to_update},
+                    else_=self.decks_table.c[column]
+                )
+
+                update_stmt = update_stmt.values({column: column_case})
+
+        update_stmt = update_stmt.values({play_date_col: play_date_case})
+
+        database.connection.execute(update_stmt)
+        database.connection.commit()
+
 
     def find_highest_level_war_decks(self, database: Database, cards: list[dict]):
         decks = []
@@ -278,7 +330,7 @@ class DeckDatabase(Database):
             self.decks_table.delete().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
         )
 
-    def insert(self, database: Database, deck_row: dict):
+    def insert(self, database: Database, deck_rows: list[dict]):
         database.connection.execute(
-            self.decks_table.insert().values(deck_row)
+            self.decks_table.insert().values(deck_rows)
         )

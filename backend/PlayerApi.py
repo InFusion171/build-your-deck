@@ -1,3 +1,4 @@
+import asyncio
 from ApiRequest import ApiRequest
 from Card.Card import Card
 import urllib.parse
@@ -47,11 +48,12 @@ class PlayerApi:
                     break
                 test_count_request = test_count_request + 1
 
+            loop = asyncio.get_event_loop()
+            top_players_response = loop.run_until_complete(
+                                    ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
+                                    f'?limit={player_limit}',
+                                    self.api_header))
 
-
-            top_players_response = ApiRequest.request(self.top_players_url.replace('LOCATION_ID', str(locationId)) + 
-                                                        f'?limit={player_limit}',
-                                                        self.api_header)
 
             if(top_players_response == None):
                 continue

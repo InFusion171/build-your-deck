@@ -1,7 +1,7 @@
 import hashlib
 
 from Card.CardDatabase import CardDatabase
-
+import sqlalchemy
 
 class Deck:
     def __init__(self, card_evos: list, cards: list, tower_troop_id: int, 
@@ -55,13 +55,19 @@ class Deck:
         if self.trophies == -1:
             return None
 
+        sqlalchemy.sql.null()
+
         base_row = {
                     column_names['deck_id']: self.get_id(),
                     column_names['tower_troop']: self.tower_troop_id,
                     column_names['play_date']: self.play_date,
                     column_names['trophies']: self.trophies,
                     column_names['won_count']: self.won_count,
-                    column_names['lost_count']: self.lost_count
+                    column_names['lost_count']: self.lost_count,
+                    column_names['card_1_evo']: sqlalchemy.sql.null(),
+                    column_names['card_2_evo']: sqlalchemy.sql.null(),
+
+                    **{column_names[f'card_{card_number}']: sqlalchemy.sql.null() for card_number in range(1, 9)}
                 }
 
         create_db_cards_row = lambda card_offset: {column_names[f'card_{card_number + card_offset}']: self.cards[card_number] 

@@ -1,3 +1,4 @@
+import asyncio
 from ApiRequest import ApiRequest
 from .LocationDatabase import LocationDatabase
 
@@ -27,11 +28,15 @@ class LocationApi:
 
 
     def _get_location_list_from_api(self) -> dict[str, str]:
-        locationListResponse = ApiRequest.request(self.location_list_url, self.api_header)
+        loop = asyncio.get_event_loop()
+        location_list_response = loop.run_until_complete(ApiRequest.request(self.location_list_url, self.api_header))
+
+        if not location_list_response:
+            return None
 
         locations = dict()
 
-        for item in locationListResponse['items']:
+        for item in location_list_response['items']:
             if(item['isCountry'] == False):
                 continue
 
