@@ -46,7 +46,7 @@ class PlayerApi:
             if os.getenv('BUILD_YOUR_DECK_TEST') == 'TRUE':
                 if test_count_request == 5:
                     break
-                test_count_request = test_count_request + 1
+                test_count_request += 1
 
             loop = asyncio.get_event_loop()
             top_players_response = loop.run_until_complete(

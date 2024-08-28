@@ -78,14 +78,10 @@ class DeckApi:
         
 
     def get_decks_from_player_battelog(self, player_tag: str):
-        
         loop = asyncio.get_event_loop()
         battlelog = loop.run_until_complete(ApiRequest.request(
                                 self.battlelog_url.replace('PLAYERTAG', urllib.parse.quote(player_tag)), 
                                 self.api_header))
-
-
-        print(f'recieved battelog from {player_tag}')
 
         if not battlelog:
             print('cant get the battle log')

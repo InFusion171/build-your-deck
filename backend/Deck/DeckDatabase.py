@@ -42,7 +42,7 @@ class DeckDatabase(Database):
         self.metadata = sql.MetaData()
 
         self.decks_table = sql.Table(self.table_name, self.metadata,
-                                    sql.Column(self.column_names['deck_id'], sql.CHAR(12), primary_key=True),
+                                    sql.Column(self.column_names['deck_id'], sql.String(), primary_key=True),
                                     sql.Column(self.column_names['card_1_evo'], sql.Integer(), nullable=True),
                                     sql.Column(self.column_names['card_2_evo'], sql.Integer(), nullable=True),
                                     sql.Column(self.column_names['card_1'], sql.Integer(), nullable=True),
@@ -84,10 +84,11 @@ class DeckDatabase(Database):
 
     
         if new_decks:
-            self.insert(database, new_decks)
+            self.insert(database, Deck.compress(new_decks, self.column_names))
 
         if existing_decks:
             self.update_values(database, existing_decks)
+
 
 
 
@@ -323,14 +324,11 @@ class DeckDatabase(Database):
 
         return decks
  
-        
-    # unused
-    def delete_deck_id_duplicate(self, database: Database, deck_id):
-        database.connection.execute(
-            self.decks_table.delete().where(self.decks_table.c[self.column_names['deck_id']] == deck_id)
-        )
 
     def insert(self, database: Database, deck_rows: list[dict]):
-        database.connection.execute(
-            self.decks_table.insert().values(deck_rows)
-        )
+        try:
+            database.connection.execute(self.decks_table.insert(), deck_rows)
+            database.connection.commit()
+        except Exception as e:
+            database.connection.rollback()
+            print('could insert values')
