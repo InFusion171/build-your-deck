@@ -101,10 +101,10 @@ class Deck:
             if deck[deck_id_column] not in seen:
                 seen.add(deck[deck_id_column])
 
-                new_deck = deck.copy()
-                new_deck[won_count_col] = 0
-                new_deck[lost_count_col] = 0
-                compressed_decks[deck[deck_id_column]] = new_deck
+                #new_deck = deck.copy()
+                #new_deck[won_count_col] = 0
+                #new_deck[lost_count_col] = 0
+                compressed_decks[deck[deck_id_column]] = deck.copy()
             
 
             added_deck = compressed_decks[deck[deck_id_column]]

@@ -136,8 +136,6 @@ class DeckDatabase(Database):
             lost_count_col = self.column_names['lost_count']
             trophies_col = self.column_names['trophies']
 
-            #print(f'updated: {deck_id} with playdate: {deck[play_date_col]}')
-
             update_stmt = (
                 self.decks_table.update()
                 .where(

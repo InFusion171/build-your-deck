@@ -40,7 +40,7 @@ class ClashRoyaleApi:
                               self.location_list
                               )
         
-        top_players = playerApi.get_top_players(1)
+        top_players = playerApi.get_top_players(100)
         
         europe_timezone = pytz.timezone('Europe/Berlin')
         current_time = datetime.now(europe_timezone)
