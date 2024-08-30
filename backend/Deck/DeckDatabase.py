@@ -126,10 +126,6 @@ class DeckDatabase(Database):
         return set(row[0] for row in existing_deck_ids_result)
 
 
-    def convert_date_for_sqlite(self, date_str):
-        return func.strftime('%Y%m%dT%H%M%S.%fZ', date_str)
-    
-
     def update_values(self, database: Database, decks_to_update: list[dict]):
         deck_id_col = self.column_names['deck_id']
         play_date_col = self.column_names['play_date']
@@ -140,11 +136,13 @@ class DeckDatabase(Database):
             lost_count_col = self.column_names['lost_count']
             trophies_col = self.column_names['trophies']
 
+            #print(f'updated: {deck_id} with playdate: {deck[play_date_col]}')
+
             update_stmt = (
                 self.decks_table.update()
                 .where(
-                    (self.decks_table.c[deck_id_col] == deck_id) #&
-                    #(self.convert_date_for_sqlite(self.decks_table.c[play_date_col]) < self.convert_date_for_sqlite(deck[play_date_col]))
+                    (self.decks_table.c[deck_id_col] == deck_id) &
+                    (self.decks_table.c[play_date_col] < deck[play_date_col])
                 )
                 .values({
                     won_count_col: self.decks_table.c[won_count_col] + deck[won_count_col],
@@ -154,43 +152,14 @@ class DeckDatabase(Database):
                 })
             )
 
-            database.connection.execute(update_stmt)
-
-        self._update_play_date_values(database, decks_to_update)
-
-    def _update_play_date_values(self, database: Database, decks_to_update: list[dict]):
-        deck_id_col = self.column_names['deck_id']
-        play_date_col = self.column_names['play_date']
-        
-        deck_id_case = sql.case(
-                {deck[deck_id_col]: deck[deck_id_col] for deck in decks_to_update},
-                value=self.decks_table.c[deck_id_col]
-            )
-        
-        play_date_case = sql.case(
-                {deck[deck_id_col]: self.convert_date_for_sqlite(deck[play_date_col]) for deck in decks_to_update},
-                value=self.convert_date_for_sqlite(self.decks_table.c[play_date_col])
-            )
+            try:
+                database.connection.execute(update_stmt)
+                database.connection.commit()
+            except Exception as e:
+                database.connection.rollback()
+                print('couldnt update values')
 
 
-        update_stmt = self.decks_table.update().where(
-            (self.decks_table.c[deck_id_col] == deck_id_case) &
-            (self.convert_date_for_sqlite(self.decks_table.c[play_date_col]) < play_date_case)
-        )
-
-        for column in self.column_names.values():
-            if column not in [deck_id_col, play_date_col]:
-                column_case = sql.case(
-                    {deck[deck_id_col]: deck[column] for deck in decks_to_update},
-                    else_=self.decks_table.c[column]
-                )
-
-                update_stmt = update_stmt.values({column: column_case})
-
-        update_stmt = update_stmt.values({play_date_col: play_date_case})
-
-        database.connection.execute(update_stmt)
-        database.connection.commit()
 
 
     def find_highest_level_war_decks(self, database: Database, cards: list[dict]):
@@ -207,8 +176,6 @@ class DeckDatabase(Database):
             deck = deck_list[0]
 
             deck.delete_deck_cards_from_cards(card_copy)
-
-            print(deck)
 
             decks.append(deck)
 
@@ -331,4 +298,4 @@ class DeckDatabase(Database):
             database.connection.commit()
         except Exception as e:
             database.connection.rollback()
-            print('could insert values')
+            print('couldnt insert values')

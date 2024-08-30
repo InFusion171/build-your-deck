@@ -57,8 +57,6 @@ class Deck:
         if self.trophies == -1:
             return None
 
-        sqlalchemy.sql.null()
-
         base_row = {
                     column_names['deck_id']: self.get_id(),
                     column_names['card_1_evo']: '',
@@ -96,29 +94,32 @@ class Deck:
         compressed_decks: dict[str, dict[str, Any]] = dict()
 
         deck_id_column = column_names['deck_id']
+        won_count_col = column_names['won_count']
+        lost_count_col = column_names['lost_count']
 
         for deck in decks:
             if deck[deck_id_column] not in seen:
                 seen.add(deck[deck_id_column])
-                compressed_decks[deck[deck_id_column]] = deck
 
-            else:
-                added_deck = compressed_decks.get(deck[deck_id_column])
+                new_deck = deck.copy()
+                new_deck[won_count_col] = 0
+                new_deck[lost_count_col] = 0
+                compressed_decks[deck[deck_id_column]] = new_deck
+            
 
-                play_date_added_deck = datetime.strptime(added_deck[column_names['play_date']], "%Y%m%dT%H%M%S.%fZ")
-                play_date_current_deck = datetime.strptime(deck[column_names['play_date']], "%Y%m%dT%H%M%S.%fZ")
+            added_deck = compressed_decks[deck[deck_id_column]]
+            added_deck[won_count_col] += deck[won_count_col]
+            added_deck[lost_count_col] += deck[lost_count_col]
 
-                if play_date_added_deck < play_date_current_deck:
-                    added_deck[column_names['play_date']] = deck[column_names['play_date']]
+            play_date_added_deck = datetime.strptime(added_deck[column_names['play_date']], "%Y%m%dT%H%M%S.%fZ")
+            play_date_current_deck = datetime.strptime(deck[column_names['play_date']], "%Y%m%dT%H%M%S.%fZ")
 
-                added_deck[column_names['trophies']] = max(added_deck[column_names['trophies']], deck[column_names['trophies']])
+            if play_date_added_deck < play_date_current_deck:
+                added_deck[column_names['play_date']] = deck[column_names['play_date']]
 
-                added_deck[column_names['won_count']] = added_deck[column_names['won_count']] + deck[column_names['won_count']]
-                added_deck[column_names['lost_count']] = added_deck[column_names['lost_count']] + deck[column_names['lost_count']]
+            added_deck[column_names['trophies']] = max(added_deck[column_names['trophies']], deck[column_names['trophies']])
 
-                compressed_decks[deck[deck_id_column]] = added_deck
-
-        return [deck for deck in compressed_decks.values()]
+        return list(compressed_decks.values())
 
 
 

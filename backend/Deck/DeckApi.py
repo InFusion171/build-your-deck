@@ -61,18 +61,16 @@ class DeckApi:
             team_deck.won_count = 1
             opponent_deck.lost_count = 1
 
-            try:
-                team_deck.trophies = game['team'][0]['startingTrophies']
-            except:
-                return None, None
         else:
             opponent_deck.won_count = 1
             team_deck.lost_count = 1
 
-            try:
-                opponent_deck.trophies = game['opponent'][0]['startingTrophies']
-            except:
-                return None, None
+
+        try:
+            team_deck.trophies = game['team'][0]['startingTrophies']
+            opponent_deck.trophies = game['opponent'][0]['startingTrophies']
+        except:
+            return None, None
 
         return team_deck, opponent_deck
         
