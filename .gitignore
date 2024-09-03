@@ -14,6 +14,7 @@ backend/__pycache__/
 /build
 
 # misc
+.venv
 .DS_Store
 .env
 .env.local
