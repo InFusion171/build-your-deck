@@ -13,9 +13,11 @@ class PlayerApi:
         self.location_list = location_list
     
     def get_player_cards(self, player_tag: str) -> list[dict]:
-        player_infos = ApiRequest.request(self.player_information_url.replace('PLAYERTAG', 
-                                                                               urllib.parse.quote(player_tag)), 
-                                                                               self.api_header)
+        loop = asyncio.get_event_loop()
+        player_infos = loop.run_until_complete(ApiRequest.request(
+                                self.player_information_url.replace('PLAYERTAG', 
+                                urllib.parse.quote(player_tag)), 
+                                self.api_header))
 
         if player_infos is None:
             print('cant get player infos')

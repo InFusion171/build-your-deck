@@ -168,7 +168,7 @@ class DeckDatabase(Database):
         for _ in range(0,4):
             deck_list = self.find_highest_level_deck(database, card_copy)
             
-            if len(deck_list) == 0:
+            if not deck_list:
                 continue
 
             deck = deck_list[0]
@@ -177,76 +177,77 @@ class DeckDatabase(Database):
 
             decks.append(deck)
 
+        return decks
 
+    def _build_query_total_level(self, cards: list[dict], used_evos: set = None, used_cards: set = None):        
+        if not used_evos:
+            used_evos = set()
+        if not used_cards:
+            used_cards = set()
 
-    def find_highest_level_deck(self, database: Database, card_levels: list[dict], deck_return_count: int = 1) -> list[Deck]:
-        evo_cards = [evo for evo in card_levels if 'evolutionLevel' in evo]
-        evo_cards_id = [card['id'] for card in evo_cards]
-        evo_cards_level_dict = {card['id']: card['level'] for card in evo_cards}
-
-        cards_id = [card['id'] for card in card_levels]
-        cards_level_dict = {card['id']: card['level'] for card in card_levels}
-
-        def get_card_name(card_pos: int):
-            if len(evo_cards_level_dict) == 0:
-                return f'card_{card_pos}'
+        evo_card_levels = Deck.get_evo_levels_from_cards([card for card in cards if card['id'] not in used_evos])
+        card_levels = Deck.get_card_levels_from_cards([card for card in cards if card['id'] not in used_cards]) 
+        
+        def get_card_index_name(card_index: int) -> str:
+            if len(evo_card_levels) > 1 and card_index <= 2:
+                return f'card_{card_index}_evo'
             
-            if len(evo_cards_level_dict) == 1:
-                if card_pos == 1:
-                    return f'card_{card_pos}_evo'
-                
-                return f'card_{card_pos}'
-                
-            if card_pos <= 2:
-                return f'card_{card_pos}_evo'
+            if len(evo_card_levels) == 1 and card_index == 1:
+                return f'card_{card_index}_evo'
             
-            return f'card_{card_pos}'
+            return f'card_{card_index}'
 
-        # junk code but i don't know a better solution :(
-        def get_level_dict(card_pos) -> dict:
-            if len(evo_cards_level_dict) == 0:
-                return cards_level_dict
+
+        def map_cards_to_index(card_index: int) -> dict:
+            if len(evo_card_levels) > 1 and card_index <= 2:
+                return evo_card_levels
             
-            if len(evo_cards_level_dict) == 1:
-                if card_pos == 1:
-                    return evo_cards_level_dict
-                
-                return cards_level_dict
-                
-            if card_pos <= 2:
-                return evo_cards_level_dict
+            if len(evo_card_levels) == 1 and card_index == 1:
+                return evo_card_levels
             
-            return cards_level_dict
-       
+            return card_levels
+
+
         level_sum_expression = sum(
             sql.case(
-                *[(self.decks_table.c[self.column_names[get_card_name(i)]] == card_id, level) 
-                for card_id, level in get_level_dict(i).items()],
+                *[(self.decks_table.c[self.column_names[get_card_index_name(i+1)]] == card_id, level) 
+                for card_id, level in map_cards_to_index(i+1).items()],
                 else_=0
-            ) for i in range(1, 9)
+            ) for i in range(Deck.DECK_SIZE)
         )
         
-
         subquery = (
             sql.select(
                 self.decks_table,
-                level_sum_expression.label('total_level'),
+                level_sum_expression.label('total_level')
             )
             .filter(
                 sql.and_(
-                    self.decks_table.c[self.column_names['card_1_evo']].in_(evo_cards_id),
-                    self.decks_table.c[self.column_names['card_2_evo']].in_(evo_cards_id),
-                    *[self.decks_table.c[self.column_names[f'card_{x}']].in_(cards_id) for x in range(3, 9)]
+                    self.decks_table.c[self.column_names['card_1_evo']].in_([id for id in evo_card_levels.keys()]),
+                    self.decks_table.c[self.column_names['card_2_evo']].in_([id for id in evo_card_levels.keys()]),
+                    *[self.decks_table.c[self.column_names[f'card_{x}']].in_(id for id in card_levels.keys()) 
+                      for x in range(3, 9)]
                 )
             )
             .order_by(desc(level_sum_expression))  
             .subquery()
         )
 
+        return subquery
+
+
+    def find_highest_level_deck(self, database: Database, 
+                                cards: list[dict], 
+                                used_evos: set = None, 
+                                used_cards: set = None, 
+                                deck_return_count: int = 1) -> list[Deck]:
+        
+        subquery = self._build_query_total_level(cards, used_evos, used_cards)
+
 
         win_probability_expr = func.coalesce(
-            subquery.c[self.column_names['won_count']] / 
-            (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']]), 
+            subquery.c[self.column_names['won_count']] / (
+                subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']]), 
             0
         )
 
@@ -255,7 +256,7 @@ class DeckDatabase(Database):
                 *[subquery.c[col] for col in subquery.c.keys() if col != 'total_level']  
             )
             #.filter(
-             #   (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 30)
+                #(subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 10)
             #)
             .order_by(
                 desc(subquery.c['total_level']), 
@@ -276,16 +277,19 @@ class DeckDatabase(Database):
             cards = []
 
             for colmn_name, card_id in deck.items():
+
                 if colmn_name == self.column_names['card_1_evo']:
-                    evo_cards.append(card_id)
+                    evo_cards.append(int(card_id))
 
                 elif colmn_name == self.column_names['card_2_evo']:
-                    evo_cards.append(card_id)
+                    evo_cards.append(int(card_id))
 
-                elif 'CARD_' in colmn_name and card_id != None:
-                    cards.append(card_id)
+                elif 'CARD_' in colmn_name and card_id:
+                    cards.append(int(card_id))
 
-            decks.append(Deck(evo_cards, cards, deck[self.column_names['tower_troop']], deck[self.column_names['play_date']]))
+            d = Deck(evo_cards, cards, deck[self.column_names['tower_troop']], deck[self.column_names['play_date']])
+
+            decks.append(d)
 
         return decks
  

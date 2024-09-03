@@ -3,10 +3,12 @@ import hashlib
 from typing import Any
 
 from Card.CardDatabase import CardDatabase
-import sqlalchemy
+
 
 class Deck:
-    def __init__(self, card_evos: list, cards: list, tower_troop_id: int, 
+    DECK_SIZE = 8
+
+    def __init__(self, card_evos: list[int], cards: list[int], tower_troop_id: int, 
                  play_date: str) -> None:
         
         self.play_date = play_date
@@ -28,8 +30,20 @@ class Deck:
         with CardDatabase() as database:
             return database.get_deck_cards(self.card_evos, self.cards)
     
-    def delete_deck_cards_from_cards(self, all_cards: list[dict]) -> None:
+    @staticmethod
+    def get_evo_levels_from_cards(cards: list[dict]):
+        evo_cards = [evo for evo in cards if 'evolutionLevel' in evo]
 
+        return {card['id']: card['level'] for card in evo_cards}
+
+    @staticmethod
+    def get_card_levels_from_cards(cards: list[dict]):
+        cards_without_evos = [card for card in cards if not 'evolutionLevel' in card]
+
+        return {card['id']: card['level'] for card in cards_without_evos}
+
+
+    def delete_deck_cards_from_cards(self, all_cards: list[dict]) -> None:
         for card in self.card_evos + self.cards:
             for all_card in all_cards:
                 if card == all_card.get('id'):
