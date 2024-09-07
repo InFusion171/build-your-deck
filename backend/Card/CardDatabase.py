@@ -68,6 +68,5 @@ class CardDatabase(Database):
 
     
     def set_cards(self, cards: list[dict]) -> None:
-        with CardDatabase(self.database_path, self.table_name) as database:
-            df = pd.DataFrame(cards)
-            df.to_sql(self.table_name, database.connection, if_exists='replace', index=False)
+        df = pd.DataFrame(cards)
+        df.to_sql(self.table_name, self.engine, if_exists='replace', index=False)

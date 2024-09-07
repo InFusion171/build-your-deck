@@ -255,9 +255,9 @@ class DeckDatabase(Database):
             sql.select(
                 *[subquery.c[col] for col in subquery.c.keys() if col != 'total_level']  
             )
-            #.filter(
-                #(subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 10)
-            #)
+            .filter(
+                (subquery.c[self.column_names['won_count']] + subquery.c[self.column_names['lost_count']] > 30)
+            )
             .order_by(
                 desc(subquery.c['total_level']), 
                 desc(self.column_names['trophies']), 

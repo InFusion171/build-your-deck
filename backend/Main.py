@@ -6,6 +6,7 @@ from ClashRoyalApi import ClashRoyaleApi
 from Card.CardDatabase import CardDatabase
 from Deck.DeckDatabase import DeckDatabase
 from Location.LocationDatabase import LocationDatabase
+from BoostedCard.BoostedCardDatabase import BoostedCardDatabase
 
 def main():
     load_dotenv()
@@ -18,6 +19,7 @@ def main():
     CardDatabase.setup_database_connection('DB/Card.sqlite', 'cards')
     DeckDatabase.setup_database_connection('DB/Deck.sqlite', 'decks')
     LocationDatabase.setup_database_connection('DB/Location.sqlite', 'locations')
+    BoostedCardDatabase.setup_database_connection('DB/BoostedCard.sqlite', 'boosted_cards')
 
     clashApi = ClashRoyaleApi()
 

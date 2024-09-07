@@ -1,9 +1,9 @@
-from ..Database import Database
+from Database import Database
 
 import sqlalchemy as sql
 import pandas as pd
 
-class BoostedCardBase(Database):
+class BoostedCardDatabase(Database):
     database_path = ''
     table_name = ''
 
@@ -22,16 +22,16 @@ class BoostedCardBase(Database):
         self.metadata = sql.MetaData()
 
         self.boosted_cards_table = sql.Table(self.table_name, self.metadata,
-                                    sql.Column('DECK_ID_0', sql.Integer(), nullable=False),
-                                    sql.Column('DECK_ID_1', sql.Integer(), nullable=False),
-                                    sql.Column('DECK_ID_2', sql.Integer(), nullable=False),
-                                    sql.Column('DECK_ID_3', sql.Integer(), nullable=False)
+                                    sql.Column('CARD_ID_0', sql.Integer(), nullable=False),
+                                    sql.Column('CARD_ID_1', sql.Integer(), nullable=False),
+                                    sql.Column('CARD_ID_2', sql.Integer(), nullable=False),
+                                    sql.Column('CARD_ID_3', sql.Integer(), nullable=False)
                                     )
         
         self.metadata.create_all(self.engine)
 
     def set_boosted_cards(self, cards: list[int]):
-        df = pd.DataFrame({f'CARD_ID_{index}': cards[index] for index in range(len(cards))})
+        df = pd.DataFrame({f'CARD_ID_{index}': cards[index] for index in range(len(cards))}, index=[0])
 
         df.to_sql(name=self.table_name, con=self.engine, if_exists='replace')
 

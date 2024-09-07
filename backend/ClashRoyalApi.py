@@ -7,6 +7,7 @@ from PlayerApi import PlayerApi
 from Deck.DeckApi import DeckApi
 
 from Card.CardApi import CardApi
+from BoostedCard.BoostedCardDatabase import BoostedCardDatabase
 
 class ClashRoyaleApi:
     def __init__(self) -> None:
@@ -51,6 +52,12 @@ class ClashRoyaleApi:
                           self.api_header)
 
         # infusion player tag #8LPG880JR
+
+        boosted_card_db = BoostedCardDatabase()
+
+        #boosted_card_db.set_boosted_cards([26000000, 26000018, 26000004, 26000055])
+
+        #print(boosted_card_db.get_boosted_cards())
 
         for deck in deckApi.get_decks(playerApi.get_player_cards('#8LPG880JR')):
             print(deck.__str__())
