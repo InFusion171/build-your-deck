@@ -99,6 +99,10 @@ class DeckApi:
             decks.append(team_deck)
             decks.append(opponent_deck)
 
+        europe_timezone = pytz.timezone('Europe/Berlin')
+        current_time = datetime.now(europe_timezone)
+        print("All battlelogs recivied at: ", current_time.strftime('%Y-%m-%d %H:%M'))
+
         return decks
     
     def write_decks_to_db(self):
@@ -113,11 +117,12 @@ class DeckApi:
             all_decks.extend(decks_player)
 
         europe_timezone = pytz.timezone('Europe/Berlin')
-        current_time = datetime.now(europe_timezone)
-        print("All battlelogs recivied at: ", current_time.strftime('%Y-%m-%d %H:%M'))
 
         with DeckDatabase() as database:
             database.add_decks(database, all_decks)
+
+        current_time = datetime.now(europe_timezone)
+        print("All Decks wrote to db at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
     def get_decks(self, cards: list[dict]):
         with DeckDatabase() as database:

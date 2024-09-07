@@ -23,8 +23,6 @@ def main():
 
     clashApi.run_api()
 
-    current_time = datetime.now(europe_timezone)
-    print("All Decks wrote to db at:", current_time.strftime('%Y-%m-%d %H:%M'))
 
 
 if __name__ == '__main__':

@@ -50,6 +50,8 @@ class ClashRoyaleApi:
                           self.clash_royal_api_url + self.player_battlelog_endpoint,
                           self.api_header)
 
+        # infusion player tag #8LPG880JR
+
         for deck in deckApi.get_decks(playerApi.get_player_cards('#8LPG880JR')):
             print(deck.__str__())
 
